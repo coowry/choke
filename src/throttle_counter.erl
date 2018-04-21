@@ -25,36 +25,45 @@
 %% @doc Create the counter gen_server process, the function receive the Id
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
+-spec start_link(Id :: atom(), Limit :: integer(), 
+		 Timeout :: atom() | integer(), Die :: integer) -> pid().
 start_link(Id, Limit, Timeout, Die) ->
     gen_server:start_link({local, Id}, ?MODULE, {Limit, Timeout, Die}, []).
 
 
-%% @doc Constructor of the counter gen_server process.
-init({Limit, Timeout, Die}) ->
-    process_flag(trap_exit, true),
-    {ok, #state{limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
-
-
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
+-spec check(integer()) -> {ok, integer()} | {error, integer()}.
 check(Id) ->
     gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
+-spec peek(integer()) -> {ok, integer()} | {error, integer()}.
 peek(Id) ->
     gen_server:call(Id, get_counter).
 
 
 %% @doc Restore the internal counter and return a pair {ok, count}.
+-spec restore(integer()) -> {ok, integer()}.
 restore(Id) ->
     gen_server:call(Id, restore_counter).
 
 
 %% @doc Stop the counter gen_server process independently of the state.
+-spec stop(integer()) -> ok.
 stop(Id) -> 
     gen_server:call(Id, stop).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% gen_server functions
+
+%% @doc Constructor of the counter gen_server process.
+init({Limit, Timeout, Die}) ->
+    process_flag(trap_exit, true),
+    {ok, #state{limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
@@ -69,7 +78,7 @@ handle_call(update_counter, _From, State) ->
     	    NewState = State#state{count = UpdateCount},
 	    erlang:send_after(State#state.timeout, self(), restore_counter),
     	    {reply, {ok, UpdateCount}, NewState, Die};
-       true -> {reply, {error, wait}, State, Die}
+       true -> {reply, {error, State#state.timeout}, State, Die}
     end;
 
 
@@ -88,12 +97,12 @@ handle_call(get_counter, _From, State) ->
 %% @doc Restore the internal counter also at the end set the die timeout of
 %% the process if not receive any call.
 handle_call(restore_counter, _From, State) ->
-    {noreply, State#state{count = 0}, State#state.die};
+    {reply, {ok, 0},State#state{count = 0}, State#state.die};
 
 
 %% @doc Stop the counter gen_server process independently of the state.
 handle_call(stop, _From, State) ->
-    {stop, normal, State};
+    {stop, normal, ok, State};
 
 
 %% @doc Process the undefine call.
