@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/4, check/1, restore/1, stop/1]).
+-export([start_link/4, check/1, peek/1, restore/1, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -41,6 +41,12 @@ check(Id) ->
     gen_server:call(Id, update_counter).
 
 
+%% @doc Get the internal counter and return a pair {ok, count} if you are
+%% between the limit or {error, timeout} if you exceed the limit.
+peek(Id) ->
+    gen_server:call(Id, get_counter).
+
+
 %% @doc Restore the internal counter and return a pair {ok, count}.
 restore(Id) ->
     gen_server:call(Id, restore_counter).
@@ -63,6 +69,18 @@ handle_call(update_counter, _From, State) ->
     	    NewState = State#state{count = UpdateCount},
 	    erlang:send_after(State#state.timeout, self(), restore_counter),
     	    {reply, {ok, UpdateCount}, NewState, Die};
+       true -> {reply, {error, wait}, State, Die}
+    end;
+
+
+%% @doc Get the internal counter and return a pair {ok, count} if you are
+%% between the limit or {error, timeout} if you exceed the limit. Also at the
+%% end set the die timeout of the process if not receive any call.
+handle_call(get_counter, _From, State) ->
+    Limit = State#state.limit,
+    Count = State#state.count,
+    Die = State#state.die,
+    if Limit > Count -> {reply, {ok, Count}, State, Die};
        true -> {reply, {error, wait}, State, Die}
     end;
 
@@ -113,4 +131,3 @@ terminate(_, State) ->
 %% @doc Process the undefine call.
 handle_cast(_Message, State) ->
     {noreply, State, State#state.die}.
-
