@@ -87,10 +87,13 @@ handle_call(update_counter, _From, State) ->
     Count = State#state.count,
     Die = State#state.die,
     if Limit > Count ->
+	    if Count == 0 ->
+		    erlang:send_after(State#state.timeout, self(), restore_counter);
+	       true -> ok
+	    end,    
     	    UpdateCount = Count + 1,
     	    NewState = State#state{count = UpdateCount},
-	    erlang:send_after(State#state.timeout, self(), restore_counter),
-    	    {reply, {ok, UpdateCount}, NewState, Die};
+	    {reply, {ok, UpdateCount}, NewState, Die};
        true -> {reply, {error, State#state.timeout}, State, Die}
     end;
 
