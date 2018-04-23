@@ -65,7 +65,7 @@ stop(Id) ->
 
 %% @doc Constructor of the counter gen_server process.
 init({Limit, Timeout, Die}) ->
-    process_flag(trap_exit, true),
+    %% process_flag(trap_exit, true),
     {ok, #state{limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
 
 
