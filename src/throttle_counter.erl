@@ -17,7 +17,10 @@
 	 handle_info/2, code_change/3, terminate/2]).
 
 %% Module records.
--record(state, {limit, count, timeout, die}).
+-record(state, {limit :: integer(), 
+		count :: integer(), 
+		timeout :: integer(), 
+		die :: integer()}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
@@ -33,26 +36,26 @@ start_link(Id, Limit, Timeout, Die) ->
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec check(integer()) -> {ok, integer()} | {error, integer()}.
+-spec check(atom()) -> {ok, integer()} | {error, integer()}.
 check(Id) ->
     gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec peek(integer()) -> {ok, integer()} | {error, integer()}.
+-spec peek(atom()) -> {ok, integer()} | {error, integer()}.
 peek(Id) ->
     gen_server:call(Id, get_counter).
 
 
 %% @doc Restore the internal counter and return a pair {ok, count}.
--spec restore(integer()) -> {ok, integer()}.
+-spec restore(atom()) -> {ok, integer()}.
 restore(Id) ->
     gen_server:call(Id, restore_counter).
 
 
 %% @doc Stop the counter gen_server process independently of the state.
--spec stop(integer()) -> ok.
+-spec stop(atom()) -> ok.
 stop(Id) -> 
     gen_server:call(Id, stop).
 
