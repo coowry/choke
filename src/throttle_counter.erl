@@ -12,7 +12,8 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/4, check/1, peek/1, restore/1, stop/1]).
+-export([start_link/4, start_link/3, check/1, peek/1, 
+	 restore/1, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -34,28 +35,37 @@ start_link(Id, Limit, Timeout, Die) ->
     gen_server:start_link({local, Id}, ?MODULE, {Limit, Timeout, Die}, []).
 
 
+%% @doc Create the counter gen_server process, the function receive the Id
+%% of the counter, the Limit of times you can call the check proces in a 
+%% time definite by the Timeout.
+-spec start_link(Limit :: integer(), Timeout :: atom() | integer(), 
+		 Die :: integer) -> pid().
+start_link(Limit, Timeout, Die) ->
+    gen_server:start_link(?MODULE, {Limit, Timeout, Die}, []).
+
+
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec check(atom()) -> {ok, integer()} | {error, integer()}.
+-spec check(atom() | pid()) -> {ok, integer()} | {error, integer()}.
 check(Id) ->
     gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec peek(atom()) -> {ok, integer()} | {error, integer()}.
+-spec peek(atom() | pid()) -> {ok, integer()} | {error, integer()}.
 peek(Id) ->
     gen_server:call(Id, get_counter).
 
 
 %% @doc Restore the internal counter and return a pair {ok, count}.
--spec restore(atom()) -> {ok, integer()}.
+-spec restore(atom() | pid()) -> {ok, integer()}.
 restore(Id) ->
     gen_server:call(Id, restore_counter).
 
 
 %% @doc Stop the counter gen_server process independently of the state.
--spec stop(atom()) -> ok.
+-spec stop(atom() | pid()) -> ok.
 stop(Id) -> 
     gen_server:call(Id, stop).
 

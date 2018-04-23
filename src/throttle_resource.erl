@@ -20,7 +20,8 @@
 -record(counter, {limit :: integer(), 
 		  timeout :: integer(), 
 		  die :: integer()}).
--record(state, {id :: atom(), 
+-record(state, {id :: atom(),
+		child :: map(),
 		counterInit = #counter{}}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,36 +70,33 @@ init({Id, {LimitCounter, TimeoutCounter, DieCounter}}) ->
     CounterInit = #counter{limit = LimitCounter,
 			   timeout = TimeoutCounter,
 			   die = DieCounter},
-    {ok, #state{id = Id, counterInit = CounterInit}}.
+    {ok, #state{id = Id, counterInit = CounterInit, child = #{}}}.
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit. Also at the
 %% end set the die timeout of the process if not receive any call.
 handle_call({update_counter, CounterId}, _From, State) ->
-    Init = State#state.counterInit,
-    {_, Pid} = throttle_counter:start_link(CounterId, Init#counter.limit, Init#counter.timeout, Init#counter.die),
-    Reply = throttle_counter:check(CounterId),
-    {reply, Reply, State};
+    {NewState, Pid} = get_child(State, CounterId),
+    Reply = throttle_counter:check(Pid),
+    {reply, Reply, NewState};
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit. Also at the
 %% end set the die timeout of the process if not receive any call.
 handle_call({get_counter, CounterId}, _From, State) ->
-    Init = State#state.counterInit,
-    throttle_counter:start_link(CounterId, Init#counter.limit, Init#counter.timeout, Init#counter.die),
-    Reply = throttle_counter:peek(CounterId),
-    {reply, Reply, State};
+    {NewState, Pid} = get_child(State, CounterId),
+    Reply = throttle_counter:peek(Pid),
+    {reply, Reply, NewState};
 
 
 %% @doc Restore the internal counter also at the end set the die timeout of
 %% the process if not receive any call.
 handle_call({restore_counter, CounterId}, _From, State) ->
-    Init = State#state.counterInit,
-    throttle_counter:start_link(CounterId, Init#counter.limit, Init#counter.timeout, Init#counter.die),
-    Reply = throttle_counter:restore(CounterId),
-    {reply, Reply, State};
+    {NewState, Pid} = get_child(State, CounterId),
+    Reply = throttle_counter:restore(Pid),
+    {reply, Reply, NewState};
 
 
 %% @doc Stop the counter gen_server process independently of the state.
@@ -110,15 +108,6 @@ handle_call(stop, _From, State) ->
 handle_call(Command, _, State) ->
     Reply = {error, "The " ++ atom_to_list(Command) ++ " is undefine"},
     {reply, Reply, State}.
-
-
-%% @doc Restore the internal counter also at the end set the die timeout of
-%% the process if not receive any call.
-handle_info({restore_counter, CounterId}, State) ->
-    Init = State#state.counterInit,
-    throttle_counter:start_link(CounterId, Init#counter.limit, Init#counter.timeout, Init#counter.die),
-    throttle_counter:restore(CounterId),
-    {noreply, State};
 
 
 %% @doc Process the undefine call.
@@ -139,3 +128,25 @@ terminate(_, State) ->
 %% @doc Process the undefine call.
 handle_cast(_Message, State) ->
     {noreply, State}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Private functions
+get_child(State, ChildId) ->
+    Map = State#state.child,
+    GetPid = case maps:is_key(ChildId, Map) of
+		 false ->
+		     Init = State#state.counterInit,
+		     {ok, Pid} = throttle_counter:start_link(Init#counter.limit, Init#counter.timeout, Init#counter.die),
+		     Pid;
+		 _ -> Pid = maps:get(ChildId, Map), 
+		      case process_info(Pid) of
+			  undefined -> Init = State#state.counterInit,
+				       {ok, Pid1} = throttle_counter:start_link(Init#counter.limit, Init#counter.timeout, Init#counter.die),
+				       Pid1;
+			  _ -> Pid
+		      end
+	     end,
+    {State#state{child = Map#{ChildId => GetPid}}, GetPid}.
+
+		       
+	    
