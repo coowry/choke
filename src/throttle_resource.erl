@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/2, check/2, peek/2, restore/2, stop/1]).
+-export([start_link/2, check/2, peek/2, restore/2, stop/1, kick/3]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -61,12 +61,18 @@ stop(Id) ->
     gen_server:call(Id, stop).
 
 
+%% @doc
+-spec kick(pid(), atom(), pid()) -> ok.
+kick(Pid, Id, CounterPid) ->
+    gen_server:call(Pid, {delete_counter, Id, CounterPid}).
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% gen_server functions
 
 %% @doc Constructor of the resource gen_server process.
 init({Id, {LimitCounter, TimeoutCounter, DieCounter}}) ->
-    %% process_flag(trap_exit, false),
+    process_flag(trap_exit, false),
     CounterInit = #counter{limit = LimitCounter,
 			   timeout = TimeoutCounter,
 			   die = DieCounter},
@@ -97,6 +103,14 @@ handle_call({restore_counter, CounterId}, _From, State) ->
     {NewState, Pid} = get_child(State, CounterId),
     Reply = throttle_counter:restore(Pid),
     {reply, Reply, NewState};
+
+
+%% @doc
+handle_call({delete_counter, CounterId, CounterPid}, _From, State) ->
+    Map = State#state.child,
+    unlink(CounterPid),
+    {noreply, State#state{child = maps:without([CounterId], Map)}};
+
 
 
 %% @doc Stop the counter gen_server process independently of the state.
@@ -136,12 +150,13 @@ get_child(State, ChildId) ->
     GetPid = case maps:is_key(ChildId, Map) of
 		 false ->
 		     Init = State#state.counterInit,
-		     {ok, Pid} = throttle_counter:start_link(Init#counter.limit, Init#counter.timeout, Init#counter.die),
+		     {ok, Pid} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, Init#counter.die),
 		     Pid;
 		 _ -> Pid = maps:get(ChildId, Map), 
 		      case process_info(Pid) of
 			  undefined -> Init = State#state.counterInit,
-				       {ok, Pid1} = throttle_counter:start_link(Init#counter.limit, Init#counter.timeout, Init#counter.die),
+				       {ok, Pid1} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, Init#counter.die),
+				       io:format("MAL~p", []),
 				       Pid1;
 			  _ -> Pid
 		      end

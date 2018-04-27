@@ -12,11 +12,12 @@
 -behaviour(supervisor).
 
 %% Exports
--export([start_link/0, init/1, start_resource/2]).
+-export([start_link/0, init/1, start_resource/2, check/2]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
 start_link() ->
+    process_flag(trap_exit, true),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 
@@ -35,3 +36,6 @@ start_resource(Id, {Limit, Timeout, Die}) ->
 		  modules => [throttle_resource]
      },
     supervisor:start_child(?MODULE, ChildSpec).
+
+check(ResourceId, CounterId) ->
+    throttle_resource:check(ResourceId, CounterId).

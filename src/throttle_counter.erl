@@ -12,13 +12,15 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/4, start_link/3, check/1, peek/1, 
+-export([start_link/5, start_link_name/5, check/1, peek/1, 
 	 restore/1, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
 %% Module records.
--record(state, {limit :: integer(), 
+-record(state, {id :: atom(),
+		parent :: pid(),
+		limit :: integer(), 
 		count :: integer(), 
 		timeout :: integer(), 
 		die :: integer()}).
@@ -29,19 +31,19 @@
 %% @doc Create the counter gen_server process, the function receive the Id
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
--spec start_link(Id :: atom(), Limit :: integer(), 
+-spec start_link_name(Id :: atom(), Parent :: pid(), Limit :: integer(), 
 		 Timeout :: atom() | integer(), Die :: integer) -> pid().
-start_link(Id, Limit, Timeout, Die) ->
-    gen_server:start_link({local, Id}, ?MODULE, {Limit, Timeout, Die}, []).
+start_link_name(Id, Parent, Limit, Timeout, Die) ->
+    gen_server:start_link({local, Id}, ?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 
 
 %% @doc Create the counter gen_server process, the function receive the Id
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
--spec start_link(Limit :: integer(), Timeout :: atom() | integer(), 
-		 Die :: integer) -> pid().
-start_link(Limit, Timeout, Die) ->
-    gen_server:start_link(?MODULE, {Limit, Timeout, Die}, []).
+-spec start_link(Id :: atom(), Parent :: pid(), Limit :: integer(), 
+		 Timeout :: atom() | integer(), Die :: integer) -> pid().
+start_link(Id, Parent, Limit, Timeout, Die) ->
+    gen_server:start_link(?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
@@ -74,9 +76,9 @@ stop(Id) ->
 %% gen_server functions
 
 %% @doc Constructor of the counter gen_server process.
-init({Limit, Timeout, Die}) ->
-    %% process_flag(trap_exit, true),
-    {ok, #state{limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
+init({Id, Parent, Limit, Timeout, Die}) ->
+    process_flag(trap_exit, true),
+    {ok, #state{id = Id, parent = Parent, limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
@@ -129,6 +131,11 @@ handle_call(Command, _, State) ->
 
 %% @doc Process the timeout request.
 handle_info(timeout, State) ->
+    io:format("Entro"),
+    Id = State#state.id,
+    Parent = State#state.parent,
+    throttle_resource:kick(Parent, Id, self()),
+    io:format("Salgo"),
     {stop, normal, State};
 
 
@@ -149,8 +156,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 %% @doc Stop the counter independently the type.
-terminate(_, State) ->
-    {stop, inactivity, State}.
+terminate(_, _State) ->
+    ok.
 
 
 %% @doc Process the undefine call.
