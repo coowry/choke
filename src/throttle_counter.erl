@@ -131,11 +131,6 @@ handle_call(Command, _, State) ->
 
 %% @doc Process the timeout request.
 handle_info(timeout, State) ->
-    io:format("Entro"),
-    Id = State#state.id,
-    Parent = State#state.parent,
-    throttle_resource:kick(Parent, Id, self()),
-    io:format("Salgo"),
     {stop, normal, State};
 
 
@@ -156,8 +151,11 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 %% @doc Stop the counter independently the type.
-terminate(_, _State) ->
-    ok.
+terminate(_, State) ->
+    Id = State#state.id,
+    Parent = State#state.parent,
+    throttle_resource:kick(Parent, Id, self()),
+    {noreply, State}.
 
 
 %% @doc Process the undefine call.
