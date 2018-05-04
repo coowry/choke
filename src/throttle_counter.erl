@@ -155,7 +155,7 @@ terminate(_, State) ->
     Id = State#state.id,
     Parent = State#state.parent,
     throttle_resource:kick(Parent, Id, self()),
-    {noreply, State}.
+    ok.
 
 
 %% @doc Process the undefine call.

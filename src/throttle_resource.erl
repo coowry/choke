@@ -64,7 +64,7 @@ stop(Id) ->
 %% @doc
 -spec kick(pid(), atom(), pid()) -> ok.
 kick(Pid, Id, CounterPid) ->
-    gen_server:call(Pid, {delete_counter, Id, CounterPid}).
+    gen_server:cast(Pid, {delete_counter, Id, CounterPid}).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,14 +105,6 @@ handle_call({restore_counter, CounterId}, _From, State) ->
     {reply, Reply, NewState};
 
 
-%% @doc
-handle_call({delete_counter, CounterId, CounterPid}, _From, State) ->
-    Map = State#state.child,
-    unlink(CounterPid),
-    {noreply, State#state{child = maps:without([CounterId], Map)}};
-
-
-
 %% @doc Stop the counter gen_server process independently of the state.
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State};
@@ -139,6 +131,13 @@ terminate(_, State) ->
     {stop, inactivity, State}.
 
 
+%% @doc
+handle_cast({delete_counter, CounterId, CounterPid}, State) ->
+    Map = State#state.child,
+    unlink(CounterPid),
+    {noreply, State#state{child = maps:without([CounterId], Map)}};
+
+
 %% @doc Process the undefine call.
 handle_cast(_Message, State) ->
     {noreply, State}.
@@ -156,7 +155,6 @@ get_child(State, ChildId) ->
 		      case process_info(Pid) of
 			  undefined -> Init = State#state.counterInit,
 				       {ok, Pid1} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, Init#counter.die),
-				       io:format("MAL~p", []),
 				       Pid1;
 			  _ -> Pid
 		      end
