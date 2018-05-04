@@ -5,13 +5,13 @@
 
 
 %% @spec start(_Type, _StartArgs) -> ServerRet
-%% @doc application start callback for Coowry Core (cwc).
+%% @doc application start callback for throttle.
 start(_Type, _StartArgs) ->
     {ok, Pid} = throttle:start_link(),
     case application:get_env(throttle, resources) of
 	{ok, Resources} ->
-	    lists:foreach(fun({Name, Init}) ->
-				  throttle:start_resource(Name, Init)
+	    lists:foreach(fun({Id, {Limit, Timeout, Die}}) ->
+				  throttle:start_resource(Id, {Limit, Timeout, Die})
 			  end, Resources);
 	_ ->
 	    ok
@@ -19,6 +19,6 @@ start(_Type, _StartArgs) ->
     {ok, Pid}.
 
 %% @spec stop(_State) -> ServerRet
-%% @doc application stop callback for Coowry Core (cwc).
+%% @doc application stop callback for throttle.
 stop(_State) ->
     ok.
