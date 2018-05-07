@@ -5,7 +5,7 @@
 %% See LICENSE.txt file for detailed information.
 %%
 %% @doc This module is an individula counter process, 
-%% this proccess will be the child of a resource supervisor.
+%% this proccess will be the child of a context supervisor.
 -module(throttle_counter).
 
 %% Includes
@@ -154,7 +154,7 @@ code_change(_OldVsn, State, _Extra) ->
 terminate(_, State) ->
     Id = State#state.id,
     Parent = State#state.parent,
-    throttle_resource:kick(Parent, Id, self()),
+    throttle_context:kick(Parent, Id, self()),
     ok.
 
 

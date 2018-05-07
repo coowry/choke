@@ -4,38 +4,81 @@
 %%
 %% See LICENSE.txt file for detailed information.
 %%
-%% @doc This module is an individula counter process, 
-%% this proccess will be the child of a resource supervisor.
+%% @doc This module is a supervisor for the context gen_servers.
+%% This module has the functions to interact with the other modules.
+%% IMPORTANT: You are only able to star one throttle supervisor.
 -module(throttle).
 
 %% Includes
 -behaviour(supervisor).
 
 %% Exports
--export([start_link/0, init/1, start_resource/2, check/2]).
+-export([start_link/0, start_context/2, check/2, 
+	 peek/2, restore/2, restart/1, init/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
+
+%% @doc Start the supervisor.
 start_link() ->
     process_flag(trap_exit, true),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
+%% @doc Create the context gen_server process, the function receive the Id
+%% of the context receive an Id and the parameters to create throttle_counter. 
+-spec start_context(Id :: atom(),
+		     CounterInit :: {integer(), integer(), integer()}) -> pid().
+start_context(Id, {Limit, Timeout, Die}) ->
+    ChildSpec = #{id => Id,
+		  start => {throttle_context, start_link, [Id, {Limit, Timeout, Die}]},
+		  restart => permanent,
+		  shutdown => 10500,
+		  type => worker,
+		  modules => [throttle_context]
+     },
+    supervisor:start_child(?MODULE, ChildSpec).
 
+
+%% @doc Update the counter of the CounterId belonging to the context 
+%% ContextId, and return a pair {ok, count} if you are between the limit or 
+%% {error, timeout} if you exceed the limit.
+-spec check(atom(), atom()) -> {ok, integer()} | {error, integer()}.
+check(ContextId, CounterId) ->
+    throttle_context:check(ContextId, CounterId).
+
+
+%% @doc Get the counter of the CounterId belonging to the context 
+%% ContextId and return a pair {ok, count} if you are between the limit or 
+%% {error, timeout} if you exceed the limit.
+-spec peek(atom(), atom()) -> {ok, integer()} | {error, integer()}.
+peek(ContextId, CounterId) ->
+    gen_server:call(ContextId, {get_counter, CounterId}).
+
+
+%% @doc Restore the counter of the CounterId belonging to the context 
+%% ContextId and return a pair {ok, count}.
+-spec restore(atom(), atom()) -> {ok, integer()}.
+restore(ContextId, CounterId) ->
+    gen_server:call(ContextId, {restore_counter, CounterId}).
+
+
+%% @doc Restart the context gen_server process independently of the state.
+-spec restart(atom()) -> ok.
+restart(ContextId) ->
+    case whereis(ContextId) of
+	undefined -> undefined;
+	A -> 
+	    unlink(A),
+	    throttle_context:stop(ContextId)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% supervisor functions
+
+%% @doc Constructor of the throttle supervisor process.
 init([]) ->
     MaxRestart = 6,
     MaxTime = 3000,
     {ok, {{one_for_one, MaxRestart, MaxTime}, []}}.
 
 
-start_resource(Id, {Limit, Timeout, Die}) ->
-    ChildSpec = #{id => Id,
-		  start => {throttle_resource, start_link, [Id, {Limit, Timeout, Die}]},
-		  restart => permanent,
-		  shutdown => 10500,
-		  type => worker,
-		  modules => [throttle_resource]
-     },
-    supervisor:start_child(?MODULE, ChildSpec).
-
-check(ResourceId, CounterId) ->
-    throttle_resource:check(ResourceId, CounterId).

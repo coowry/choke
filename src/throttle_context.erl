@@ -5,8 +5,8 @@
 %% See LICENSE.txt file for detailed information.
 %%
 %% @doc This module is an individula counter process, 
-%% this proccess will be the child of a resource supervisor.
--module(throttle_resource).
+%% this proccess will be the child of a context supervisor.
+-module(throttle_context).
 
 %% Includes
 -behaviour(gen_server).
@@ -27,8 +27,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
 
-%% @doc Create the resource gen_server process, the function receive the Id
-%% of the resource receive an Id and the parameters to create throttle_counter. 
+%% @doc Create the context gen_server process, the function receive the Id
+%% of the context receive an Id and the parameters to create throttle_counter. 
 -spec start_link(Id :: atom(),
 		 CounterInit :: {integer(), integer(), integer()}) -> pid().
 start_link(Id, CounterInit) ->
@@ -38,21 +38,21 @@ start_link(Id, CounterInit) ->
 %% @doc Update the counter of the CounterId and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
 -spec check(atom(), atom()) -> {ok, integer()} | {error, integer()}.
-check(ResourceId, CounterId) ->
-    gen_server:call(ResourceId, {update_counter, CounterId}).
+check(ContextId, CounterId) ->
+    gen_server:call(ContextId, {update_counter, CounterId}).
 
 
 %% @doc Get the counter of the CounterId and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
 -spec peek(atom(), atom()) -> {ok, integer()} | {error, integer()}.
-peek(ResourceId, CounterId) ->
-    gen_server:call(ResourceId, {get_counter, CounterId}).
+peek(ContextId, CounterId) ->
+    gen_server:call(ContextId, {get_counter, CounterId}).
 
 
 %% @doc Restore the counter of the CounterId and return a pair {ok, count}.
 -spec restore(atom(), atom()) -> {ok, integer()}.
-restore(ResourceId, CounterId) ->
-    gen_server:call(ResourceId, {restore_counter, CounterId}).
+restore(ContextId, CounterId) ->
+    gen_server:call(ContextId, {restore_counter, CounterId}).
 
 
 %% @doc Stop the counter gen_server process independently of the state.
@@ -70,7 +70,7 @@ kick(Pid, Id, CounterPid) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% gen_server functions
 
-%% @doc Constructor of the resource gen_server process.
+%% @doc Constructor of the context gen_server process.
 init({Id, {LimitCounter, TimeoutCounter, DieCounter}}) ->
     process_flag(trap_exit, false),
     CounterInit = #counter{limit = LimitCounter,
@@ -127,8 +127,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 %% @doc Stop the counter independently the type.
-terminate(_, State) ->
-    {stop, inactivity, State}.
+terminate(_, _State) ->
+    ok.
 
 
 %% @doc
@@ -160,6 +160,4 @@ get_child(State, ChildId) ->
 		      end
 	     end,
     {State#state{child = Map#{ChildId => GetPid}}, GetPid}.
-
-		       
 	    
