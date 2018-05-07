@@ -1,29 +1,40 @@
-# README #
+# Throttle
 
-This README would normally document whatever steps are necessary to get your application up and running.
+Application to implement throttling/rate limit of contexts in Erlang.
 
-### What is this repository for? ###
+## Introduction
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+Throttle is a `rebar` library, created to avoid throttling on your REST application 
+writed in Erlang. 
 
-### How do I get set up? ###
+The application allow us to control the users petitions to the REST using a internat counter
+per `Id` per context. The counter, restart his internal counter every `Timeout` and if the 
+counter has not been use during `Die` time, the counter die in this specific context.
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000, 10000}).
+{ok,<0.50.0>}
+3> throttle:check('context', 'id'), throttle:check('context', 'id'), throttle:check('context', 'id').
+{ok,3}
+4> throttle:check('context', 'id'), throttle:check('context', 'id'), 
+4> throttle:check('context', 'id'), timer:sleep(5000),
+4> throttle:peek('context', 'id').
+{ok,0}
+5> throttle:check('context', 'id'), throttle:check('context', 'id'), 
+5> throttle:check('context', 'id'), throttle:check('context', 'id').
+{ok,4}
+6> throttle:check('context', 'id'), throttle:check('context', 'id'), 
+6> throttle:check('context', 'id'), throttle:check('context', 'id'),
+6> throttle:check('context', 'id').
+{error,5000}
+```
 
-### Contribution guidelines ###
+## Set-Up
 
-* Writing tests
-* Code review
-* Other guidelines
 
-### Who do I talk to? ###
+## Functions
 
-* Repo owner or admin
-* Other community or team contact
+### start\_link() -> supervisor:startlink\_ret().
+Start the throttle
