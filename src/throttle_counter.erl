@@ -22,7 +22,7 @@
 		parent :: pid(),
 		limit :: integer(), 
 		count :: integer(), 
-		timeout :: integer(), 
+		timeout :: integer(),
 		die :: integer()}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,7 +32,7 @@
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
 -spec start_link_name(Id :: atom(), Parent :: pid(), Limit :: integer(), 
-		 Timeout :: atom() | integer(), Die :: integer) -> pid().
+		 Timeout :: atom() | integer(), Die :: integer()) -> pid().
 start_link_name(Id, Parent, Limit, Timeout, Die) ->
     gen_server:start_link({local, Id}, ?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 
@@ -41,21 +41,21 @@ start_link_name(Id, Parent, Limit, Timeout, Die) ->
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
 -spec start_link(Id :: atom(), Parent :: pid(), Limit :: integer(), 
-		 Timeout :: atom() | integer(), Die :: integer) -> pid().
+		 Timeout :: atom() | integer(), Die :: integer()) -> pid().
 start_link(Id, Parent, Limit, Timeout, Die) ->
     gen_server:start_link(?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec check(atom() | pid()) -> {ok, integer()} | {error, integer()}.
+-spec check(atom() | pid()) -> {ok, integer()} | {error, integer(), integer()}.
 check(Id) ->
     gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec peek(atom() | pid()) -> {ok, integer()} | {error, integer()}.
+-spec peek(atom() | pid()) -> {ok, integer()} | {error, integer(), integer()}.
 peek(Id) ->
     gen_server:call(Id, get_counter).
 
@@ -89,14 +89,12 @@ handle_call(update_counter, _From, State) ->
     Count = State#state.count,
     Die = State#state.die,
     if Limit > Count ->
-	    if Count == 0 ->
-		    erlang:send_after(State#state.timeout, self(), restore_counter);
-	       true -> ok
-	    end,    
+	    erlang:send_after(State#state.timeout, self(), sub_counter),
     	    UpdateCount = Count + 1,
     	    NewState = State#state{count = UpdateCount},
 	    {reply, {ok, UpdateCount}, NewState, Die};
-       true -> {reply, {error, State#state.timeout}, State, Die}
+       true -> 
+	    {reply, {error, State#state.limit, State#state.timeout}, State, Die}
     end;
 
 
@@ -108,14 +106,13 @@ handle_call(get_counter, _From, State) ->
     Count = State#state.count,
     Die = State#state.die,
     if Limit > Count -> {reply, {ok, Count}, State, Die};
-       true -> {reply, {error, wait}, State, Die}
+       true -> {reply, {error, Limit, State#state.timeout}, State, Die}
     end;
-
 
 %% @doc Restore the internal counter also at the end set the die timeout of
 %% the process if not receive any call.
 handle_call(restore_counter, _From, State) ->
-    {reply, {ok, 0},State#state{count = 0}, State#state.die};
+    {reply, {ok, 0}, State#state{count = 0}, State#state.die};
 
 
 %% @doc Stop the counter gen_server process independently of the state.
@@ -138,6 +135,14 @@ handle_info(timeout, State) ->
 %% the process if not receive any call.
 handle_info(restore_counter, State) ->
     {noreply, State#state{count = 0}, State#state.die};
+
+
+
+%% @doc Restore the internal counter also at the end set the die timeout of
+%% the process if not receive any call.
+handle_info(sub_counter, State) ->
+    Count = State#state.count,
+    {noreply, State#state{count = Count - 1}, State#state.die};
 
 
 %% @doc Process the undefine call.

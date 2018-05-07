@@ -20,6 +20,7 @@
 %% Public functions
 
 %% @doc Start the supervisor.
+-spec start_link() -> supervisor:startlink_ret().
 start_link() ->
     process_flag(trap_exit, true),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
@@ -28,9 +29,9 @@ start_link() ->
 %% of the context receive an Id and the parameters to create throttle_counter. 
 -spec start_context(Id :: atom(),
 		     CounterInit :: {integer(), integer(), integer()}) -> pid().
-start_context(Id, {Limit, Timeout, Die}) ->
+start_context(Id, {Limit, Timeout}) ->
     ChildSpec = #{id => Id,
-		  start => {throttle_context, start_link, [Id, {Limit, Timeout, Die}]},
+		  start => {throttle_context, start_link, [Id, {Limit, Timeout}]},
 		  restart => permanent,
 		  shutdown => 10500,
 		  type => worker,

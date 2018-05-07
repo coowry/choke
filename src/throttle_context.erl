@@ -18,8 +18,7 @@
 
 %% Module records.
 -record(counter, {limit :: integer(), 
-		  timeout :: integer(), 
-		  die :: integer()}).
+		  timeout :: integer()}).
 -record(state, {id :: atom(),
 		child :: map(),
 		counterInit = #counter{}}).
@@ -30,7 +29,7 @@
 %% @doc Create the context gen_server process, the function receive the Id
 %% of the context receive an Id and the parameters to create throttle_counter. 
 -spec start_link(Id :: atom(),
-		 CounterInit :: {integer(), integer(), integer()}) -> pid().
+		 CounterInit :: {integer(), integer()}) -> pid().
 start_link(Id, CounterInit) ->
     gen_server:start_link({local, Id}, ?MODULE, {Id, CounterInit}, []).
 
@@ -71,11 +70,10 @@ kick(Pid, Id, CounterPid) ->
 %% gen_server functions
 
 %% @doc Constructor of the context gen_server process.
-init({Id, {LimitCounter, TimeoutCounter, DieCounter}}) ->
+init({Id, {LimitCounter, TimeoutCounter}}) ->
     process_flag(trap_exit, false),
     CounterInit = #counter{limit = LimitCounter,
-			   timeout = TimeoutCounter,
-			   die = DieCounter},
+			   timeout = TimeoutCounter},
     {ok, #state{id = Id, counterInit = CounterInit, child = #{}}}.
 
 
@@ -149,12 +147,12 @@ get_child(State, ChildId) ->
     GetPid = case maps:is_key(ChildId, Map) of
 		 false ->
 		     Init = State#state.counterInit,
-		     {ok, Pid} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, Init#counter.die),
+		     {ok, Pid} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, 3 * Init#counter.timeout),
 		     Pid;
 		 _ -> Pid = maps:get(ChildId, Map), 
 		      case process_info(Pid) of
 			  undefined -> Init = State#state.counterInit,
-				       {ok, Pid1} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, Init#counter.die),
+				       {ok, Pid1} = throttle_counter:start_link(ChildId, self(), Init#counter.limit, Init#counter.timeout, 3 * Init#counter.timeout),
 				       Pid1;
 			  _ -> Pid
 		      end
