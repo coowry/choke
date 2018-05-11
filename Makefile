@@ -22,6 +22,7 @@ shell:
 
 clean:
 	./rebar3 clean
+	rm -rf ebin
 
 pull:
 	git fetch --prune
