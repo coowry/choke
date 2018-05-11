@@ -74,17 +74,25 @@ restart(ContextId) ->
 	    throttle_context:stop(ContextId)
     end.
 
+
 %% @doc Stop the context gen_server process independently of the state.
--spec stop(atom() | pid()) -> ok | {error, atom()}.
-stop(ContextId) ->
+-spec stop(atom() | pid()) -> ok | {error, atom() | pid()}.
+stop(ContextId) when is_atom(ContextId) ->
     supervisor:terminate_child(?MODULE, ContextId),
-    supervisor:delete_child(?MODULE, ContextId).
+    supervisor:delete_child(?MODULE, ContextId);
+
+stop(ContextId) when is_pid(ContextId) ->
+    case process_info(ContextId, registered_name) of
+	{registered_name, Name} ->
+	    stop(Name);
+	_ -> {error, ContextId}
+    end.
 
 
 %% @doc Stop the throttle supervisor process independently of the state.
 -spec stop() -> true.
 stop() ->
-    exit(whereis(throttle), kill).
+    exit(whereis(?MODULE), shutdown).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

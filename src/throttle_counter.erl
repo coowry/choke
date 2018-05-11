@@ -107,7 +107,7 @@ handle_call(get_counter, _From, State) ->
     Limit = State#state.limit,
     Count = State#state.count,
     Die = State#state.die,
-    if Limit > Count -> {reply, {ok, Count}, State, Die};
+    if Limit > Count -> {reply, {ok, Count + 1}, State, Die};
        true -> {reply, {error, Limit, State#state.timeout}, State, Die}
     end;
 
