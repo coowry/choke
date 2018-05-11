@@ -85,7 +85,7 @@ die_test_() ->
 
 check_peek_test_() ->
     [
-     ?_test(?debugFmt("Check Test", [])),
+     ?_test(?debugFmt("Check and Peek Test", [])),
      ?_test(begin
 		{ok, Pid} = throttle_counter:start_link('Counter1', self(), 4, 1000, 10000),
 		?assertEqual({ok, 1},  throttle_counter:check(Pid)),
@@ -102,9 +102,9 @@ check_peek_test_() ->
 		{ok, Pid} = throttle_counter:start_link('Counter1', self(), 4, 1000, 10000),
 		?assertEqual({ok, 1},  throttle_counter:check(Pid)),
 		timer:sleep(250),
-		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 2},  throttle_counter:peek(Pid)),
 		timer:sleep(750),
-		?assertEqual({ok, 0},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
 		unlink(Pid),
 		exit(Pid, kill)
 	    end),
@@ -114,9 +114,9 @@ check_peek_test_() ->
 		timer:sleep(250),
 		?assertEqual({ok, 2},  throttle_counter:check(Pid)),
 		timer:sleep(750),
-		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 2},  throttle_counter:peek(Pid)),
 		timer:sleep(250),
-		?assertEqual({ok, 0},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
 		unlink(Pid),
 		exit(Pid, kill)
 	    end)
@@ -129,7 +129,7 @@ restore_test_() ->
 		throttle_counter:check(Pid),
 		throttle_counter:check(Pid),
 		?assertEqual({ok, 0},  throttle_counter:restore(Pid)),
-		?assertEqual({ok, 0},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
 		?assertEqual({ok, 1},  throttle_counter:check(Pid)),
 		unlink(Pid),
 		exit(Pid, kill)
@@ -142,7 +142,7 @@ restore_test_() ->
 		throttle_counter:check(Pid),
 		throttle_counter:check(Pid),
 		?assertEqual({ok, 0},  throttle_counter:restore(Pid)),
-		?assertEqual({ok, 0},  throttle_counter:peek(Pid)),
+		?assertEqual({ok, 1},  throttle_counter:peek(Pid)),
 		?assertEqual({ok, 1},  throttle_counter:check(Pid)),
 		unlink(Pid),
 		exit(Pid, kill)
