@@ -37,7 +37,7 @@ Each user could be at different contexts at the same time beeing the access cont
 ok
 2> throttle:start_context('context', {4, 5000}).  %% 4 attempts every 5 seconds
 {ok,<0.50.0>}
-3> throttle:start_context('context1', {6, 10000}).  %% 6 attempts every 2 seconds
+3> throttle:start_context('context1', {6, 10000}).  %% 6 attempts every 10 seconds
 {ok,<0.60.0>}
 3> throttle:check('context', 'id'), throttle:check('context1', 'id'),
 3> io:format("Context1: ~p, Context2: ~p~n",[throttle:peek('context', 'id'), throttle:peek('context1', 'id')]).
@@ -67,6 +67,6 @@ Rates can also be set via application environment instead of calling `start_cont
 ```
 
 ## Functions
-
+List of all the functionas avilables on the library.
 ### start\_link() -> supervisor:startlink\_ret().
-Start the throttle
+Start the throttle supervisor
