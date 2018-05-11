@@ -14,7 +14,8 @@
 
 %% Exports
 -export([start_link/0, start_context/2, check/2, 
-	 peek/2, restore/2, restart/1, init/1]).
+	 stop/1, stop/0, peek/2, restore/2, restart/1, 
+	 init/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
@@ -28,7 +29,7 @@ start_link() ->
 %% @doc Create the context gen_server process, the function receive the Id
 %% of the context receive an Id and the parameters to create throttle_counter. 
 -spec start_context(Id :: atom(),
-		     CounterInit :: {integer(), integer(), integer()}) -> pid().
+		     CounterInit :: {integer(), integer()}) -> {ok, pid()}.
 start_context(Id, {Limit, Timeout}) ->
     ChildSpec = #{id => Id,
 		  start => {throttle_context, start_link, [Id, {Limit, Timeout}]},
@@ -72,6 +73,19 @@ restart(ContextId) ->
 	    unlink(A),
 	    throttle_context:stop(ContextId)
     end.
+
+%% @doc Stop the context gen_server process independently of the state.
+-spec stop(atom() | pid()) -> ok | {error, atom()}.
+stop(ContextId) ->
+    supervisor:terminate_child(?MODULE, ContextId),
+    supervisor:delete_child(?MODULE, ContextId).
+
+
+%% @doc Stop the throttle supervisor process independently of the state.
+-spec stop() -> true.
+stop() ->
+    exit(whereis(throttle), kill).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% supervisor functions

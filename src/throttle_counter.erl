@@ -32,7 +32,8 @@
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
 -spec start_link_name(Id :: atom(), Parent :: pid(), Limit :: integer(), 
-		 Timeout :: atom() | integer(), Die :: integer()) -> pid().
+		 Timeout :: atom() | integer(), Die :: integer()) ->  
+			     {ok, pid()} | ignore | {error, term()}.
 start_link_name(Id, Parent, Limit, Timeout, Die) ->
     gen_server:start_link({local, Id}, ?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 
@@ -41,7 +42,8 @@ start_link_name(Id, Parent, Limit, Timeout, Die) ->
 %% of the counter, the Limit of times you can call the check proces in a 
 %% time definite by the Timeout.
 -spec start_link(Id :: atom(), Parent :: pid(), Limit :: integer(), 
-		 Timeout :: atom() | integer(), Die :: integer()) -> pid().
+		 Timeout :: atom() | integer(), Die :: integer()) ->  
+			{ok, pid()} | ignore | {error, term()}.
 start_link(Id, Parent, Limit, Timeout, Die) ->
     gen_server:start_link(?MODULE, {Id, Parent, Limit, Timeout, Die}, []).
 

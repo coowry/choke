@@ -29,7 +29,7 @@
 %% @doc Create the context gen_server process, the function receive the Id
 %% of the context receive an Id and the parameters to create throttle_counter. 
 -spec start_link(Id :: atom(),
-		 CounterInit :: {integer(), integer()}) -> pid().
+		 CounterInit :: {integer(), integer()}) -> {ok, pid()} | ignore | {error, term()}.
 start_link(Id, CounterInit) ->
     gen_server:start_link({local, Id}, ?MODULE, {Id, CounterInit}, []).
 

@@ -10,8 +10,8 @@ start(_Type, _StartArgs) ->
     {ok, Pid} = throttle:start_link(),
     case application:get_env(throttle, resources) of
 	{ok, Resources} ->
-	    lists:foreach(fun({Id, {Limit, Timeout, Die}}) ->
-				  throttle:start_resource(Id, {Limit, Timeout, Die})
+	    lists:foreach(fun({Id, {Limit, Timeout}}) ->
+				  throttle:start_context(Id, {Limit, Timeout})
 			  end, Resources);
 	_ ->
 	    ok
