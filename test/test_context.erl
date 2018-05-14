@@ -69,7 +69,6 @@ check_peek_test_() ->
 		?assertEqual({error, 2, 1000}, throttle_context:check(Pid, Name)),
 		?assertEqual({error, 2, 1000}, throttle_context:peek(Pid, Name)),
 		?assertEqual({error, 2, 1000}, throttle_context:check(Pid, Name)),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end),
      ?_test(begin
@@ -78,7 +77,6 @@ check_peek_test_() ->
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
 		timer:sleep(2000),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end),
      ?_test(begin
@@ -89,7 +87,6 @@ check_peek_test_() ->
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter4')),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter5')),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter6')),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end),
      ?_test(begin
@@ -100,7 +97,6 @@ check_peek_test_() ->
 		?assertEqual({ok, 2},  throttle_context:check(Pid, 'counter2')),
 		?assertEqual({error, 2, 1000},  throttle_context:check(Pid, 'counter1')),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter3')),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end)
     ].
@@ -115,7 +111,6 @@ restore_test_() ->
 		?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:peek(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end),
      ?_test(begin
@@ -128,7 +123,6 @@ restore_test_() ->
 	        ?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:peek(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end),
      ?_test(begin
@@ -144,7 +138,6 @@ restore_test_() ->
 		?assertEqual({ok, 1},  throttle_context:peek(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
 		?assertEqual({error, 2, 1000},  throttle_context:peek(Pid, 'counter2')),
-		unlink(Pid),
 		throttle_context:stop(Pid)
 	    end)
     ].

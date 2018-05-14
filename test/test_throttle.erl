@@ -29,11 +29,12 @@ create_contest_test_() ->
 		throttle:start_link(),
 		{ok, Pid} = throttle:start_context('context1', {2, 5000}),
 		?assertNotEqual('undefined', process_info(Pid)),
-		unlink(Pid),
-		throttle:stop('context1')
+	        throttle:stop('context1'),
+		throttle:stop()
 	   end),
      ?_test(begin
 		?debugFmt("Create Multiple Link", []),
+		throttle:start_link(),
 		List = [
 			throttle:start_context('context1', {2, 5000}),
 			throttle:start_context('context2', {3, 5000}),
@@ -44,10 +45,10 @@ create_contest_test_() ->
 		       ],
 		Check = fun({ok, Pid}) ->
 				?assertNotEqual('undefined', process_info(Pid)),
-				unlink(Pid),
 				throttle:stop(Pid)
 			end,
-		lists:foreach(Check, List)
+		lists:foreach(Check, List),
+		throttle:stop()
 	    end)
     ].
 
@@ -58,88 +59,179 @@ check_peek_test_() ->
 		Context = 'context1',
 		Counter = 'counter1',
 		throttle:start_link(),
-		{ok, Pid} = throttle:start_context(Context, {2, 1000}),
+		throttle:start_context(Context, {2, 1000}),
 		?assertEqual({ok, 1},  throttle:check(Context, Counter)),
 		?assertEqual({ok, 2},  throttle:check(Context, Counter)),
 		?assertEqual({error, 2, 1000}, throttle_context:check(Context, Counter)),
 		?assertEqual({error, 2, 1000}, throttle_context:peek(Context, Counter)),
 		?assertEqual({error, 2, 1000}, throttle_context:check(Context, Counter)),
-		unlink(Pid),
-		throttle:stop(Context)
+	        throttle:stop(Context),
+		throttle:stop()
+	    end),
+     ?_test(begin
+		Context = 'context1',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context, {2, 1000}),
+		?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context, Counter)),
+		timer:sleep(2000),
+		?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		throttle:stop(Context),
+		throttle:stop()
+	    end),
+     ?_test(begin
+     		Context = 'context1',
+     		Counter1 = 'counter1',
+     		Counter2 = 'counter2',
+     		throttle:start_link(),
+     		throttle:start_context(Context, {2, 1000}),
+     		?assertEqual({ok, 1},  throttle:check(Context, Counter1)),
+		?assertEqual({ok, 1},  throttle:check(Context, Counter2)),
+		?assertEqual({ok, 2},  throttle:check(Context, Counter1)),
+		?assertEqual({error, 2, 1000}, throttle_context:check(Context, Counter1)),
+		?assertEqual({ok, 2}, throttle:check(Context, Counter2)),
+		throttle:stop(Context),
+		throttle:stop()
+     	    end),
+     ?_test(begin
+     		Context1 = 'context1',
+		Context2 = 'context2',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context1, {2, 1000}),
+		throttle:start_context(Context2, {3, 2000}),
+		?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 1},  throttle:check(Context2, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context2, Counter)),
+		?assertEqual({ok, 3},  throttle:check(Context2, Counter)),
+		?assertEqual({error, 2, 1000}, throttle_context:check(Context1, Counter)),
+		?assertEqual({error, 3, 2000}, throttle_context:check(Context2, Counter)),
+		throttle:stop(Context1),
+		throttle:stop(Context2),
+		throttle:stop()
+     	    end),
+     ?_test(begin
+		Context1 = 'context1',
+		Context2 = 'context2',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context1, {2, 1000}),
+		throttle:start_context(Context2, {3, 2000}),
+		?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 1},  throttle:check(Context2, Counter)),
+		timer:sleep(1000),
+		?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context2, Counter)),
+		timer:sleep(1000),
+		?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context2, Counter)),
+		throttle:stop(Context1),
+		throttle:stop(Context2),
+		throttle:stop()
 	    end)
-     %% ?_test(begin
-     %% 		Name = 'counter1',
-     %% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-     %% 		timer:sleep(2000),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-     %% 		unlink(Pid),
-     %% 		throttle_context:stop(Pid)
-     %% 	    end),
-     %% ?_test(begin
-     %% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter1')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter2')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter3')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter4')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter5')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter6')),
-     %% 		unlink(Pid),
-     %% 		throttle_context:stop(Pid)
-     %% 	    end),
-     %% ?_test(begin
-     %% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter1')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter2')),
-     %% 		?assertEqual({ok, 2},  throttle_context:check(Pid, 'counter1')),
-     %% 		?assertEqual({ok, 2},  throttle_context:check(Pid, 'counter2')),
-     %% 		?assertEqual({error, 2, 1000},  throttle_context:check(Pid, 'counter1')),
-     %% 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter3')),
-     %% 		unlink(Pid),
-     %% 		throttle_context:stop(Pid)
-     %% 	    end)
     ].
 
-%% restore_test_() ->
-%%     [
-%%      ?_test(begin
-%% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-%% 		Name = 'counter1',
-%% 	        throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 		?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
-%% 		?assertEqual({ok, 0},  throttle_context:peek(Pid, Name)),
-%% 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-%% 		unlink(Pid),
-%% 		throttle_context:stop(Pid)
-%% 	    end),
-%%      ?_test(begin
-%% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-%% 		Name = 'counter1',
-%% 	        throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 	        ?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
-%% 		?assertEqual({ok, 0},  throttle_context:peek(Pid, Name)),
-%% 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-%% 		unlink(Pid),
-%% 		throttle_context:stop(Pid)
-%% 	    end),
-%%      ?_test(begin
-%% 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
-%% 		Name = 'counter1',
-%% 	        throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, 'counter2'),
-%% 		throttle_context:check(Pid, 'counter2'),
-%% 		throttle_context:check(Pid, Name),
-%% 		throttle_context:check(Pid, Name),
-%% 	        ?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
-%% 		?assertEqual({ok, 0},  throttle_context:peek(Pid, Name)),
-%% 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-%% 		?assertEqual({ok, 2},  throttle_context:peek(Pid, 'counter2')),
-%% 		unlink(Pid),
-%% 		throttle_context:stop(Pid)
-%% 	    end)
-%%     ].
+restore_test_() ->
+    [
+     ?_test(?debugFmt("Restore Test", [])),
+     ?_test(begin
+		Context = 'context1',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context, {2, 1000}),
+		?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context, Counter)),
+		?assertEqual({ok, 0},  throttle:restore(Context, Counter)),
+	        ?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		throttle:stop(Context),
+		throttle:stop()
+	    end),
+     ?_test(begin
+     		Context = 'context1',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context, {2, 1000}),
+		?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context, Counter)),
+		?assertEqual({error, 2, 1000},  throttle:check(Context, Counter)),
+		?assertEqual({ok, 0},  throttle:restore(Context, Counter)),
+	        ?assertEqual({ok, 1},  throttle:check(Context, Counter)),
+		throttle:stop(Context),
+		throttle:stop()
+	    end),
+     ?_test(begin
+		Context = 'context1',
+     		Counter1 = 'counter1',
+     		Counter2 = 'counter2',
+     		throttle:start_link(),
+     		throttle:start_context(Context, {2, 1000}),
+     		throttle:check(Context, Counter1),
+		throttle:check(Context, Counter1),
+		throttle:check(Context, Counter1),
+		throttle:check(Context, Counter1),
+		throttle:check(Context, Counter2),
+     		?assertEqual({ok, 0},  throttle:restore(Context, Counter1)),
+	        ?assertEqual({ok, 1},  throttle:check(Context, Counter1)),
+		?assertEqual({ok, 2},  throttle:check(Context, Counter2)),
+		throttle:stop(Context),
+		throttle:stop()
+     	    end),
+     ?_test(begin
+		Context1 = 'context1',
+		Context2 = 'context2',
+		Counter = 'counter1',
+		throttle:start_link(),
+		throttle:start_context(Context1, {2, 1000}),
+		throttle:start_context(Context2, {3, 2000}),
+		?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+		?assertEqual({ok, 1},  throttle:check(Context2, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context1, Counter)),
+		?assertEqual({error, 2, 1000},  throttle:check(Context1, Counter)),
+     		?assertEqual({ok, 0},  throttle:restore(Context1, Counter)),
+		?assertEqual({ok, 2},  throttle:check(Context2, Counter)),
+		throttle:stop(Context1),
+		throttle:stop(Context2),
+		throttle:stop()
+	    end)
+    ].
+
+restart_test_() ->
+    ?_test(?debugFmt("Restart Test", [])),
+    ?_test(begin
+	       Context = 'context1',
+	       Counter1 = 'counter1',
+	       Counter2 = 'counter2',
+	       throttle:start_link(),
+	       throttle:start_context(Context, {2, 1000}),
+	       throttle:check(Context, Counter1),
+	       throttle:check(Context, Counter2),
+	       throttle:restart(Context),
+	       timer:sleep(1000),
+	       ?assertEqual({ok, 1},  throttle:check(Context, Counter1)),
+	       ?assertEqual({ok, 1},  throttle:check(Context, Counter2)),
+	       throttle:stop(Context),
+	       throttle:stop()
+	   end).
+
+application_test_() ->
+    ?_test(begin
+	       ?debugFmt("Check and Peek Test", []),
+	       ok = application:start(throttle),
+	       Context1 = 'context1',
+	       Context2 = 'context2',
+	       Counter = 'counter1',
+	       throttle:start_context(Context1, {2, 1000}),
+	       throttle:start_context(Context2, {3, 2000}),
+	       ?assertEqual({ok, 1},  throttle:check(Context1, Counter)),
+	       ?assertEqual({ok, 1},  throttle:check(Context2, Counter)),
+	       ?assertEqual({ok, 2},  throttle:check(Context1, Counter)),
+	       ?assertEqual({ok, 2},  throttle:check(Context2, Counter)),
+	       ?assertEqual({ok, 3},  throttle:check(Context2, Counter)),
+	       ?assertEqual({error, 2, 1000}, throttle_context:check(Context1, Counter)),
+	       ?assertEqual({error, 3, 2000}, throttle_context:check(Context2, Counter)),
+	       throttle:stop(Context1),
+	       throttle:stop(Context2),
+	       throttle:stop()
+	   end).
