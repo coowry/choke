@@ -27,7 +27,7 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% @doc Create the context gen_server process, the function receive the Id
-%% of the context receive an Id and the parameters to create throttle_counter. 
+%% of the context and the parameters to create throttle_counter. 
 -spec start_context(Id :: atom(),
 		     CounterInit :: {integer(), integer()}) -> {ok, pid()}.
 start_context(Id, {Limit, Timeout}) ->
@@ -43,7 +43,7 @@ start_context(Id, {Limit, Timeout}) ->
 
 %% @doc Update the counter of the CounterId belonging to the context 
 %% ContextId, and return a pair {ok, count} if you are between the limit or 
-%% {error, timeout} if you exceed the limit.
+%% {error, limit, timeout} if you exceed the limit.
 -spec check(atom(), atom()) -> {ok, integer()} | {error, integer()}.
 check(ContextId, CounterId) ->
     throttle_context:check(ContextId, CounterId).
