@@ -4,7 +4,7 @@ Application to implement throttling/rate limit of contexts in Erlang.
 
 ## Introduction
 
-Throttle is a `rebar3` library, created to avoid throttling on your REST application programmed in Erlang.
+Throttle is a `rebar3` library, created to avoid throttling on your REST application programmed in Erlang
 The application allow us to limit different context at different rates, allowing us to control the users (id) petitions to the REST, defining the numerber of attempts in a time interval.
 ```Erlang
 1> application:start(throttle).
@@ -17,11 +17,11 @@ ok
 4> throttle:check('context', 'id'), timer:sleep(1000),
 4> throttle:check('context', 'id'), timer:sleep(5000),
 4> throttle:peek('context', 'id').
-{ok,0}
+{ok,1}
 5> throttle:check('context', 'id'), timer:sleep(4000),
 5> throttle:check('context', 'id'), timer:sleep(1000),
 5> throttle:peek('context', 'id').
-{ok,1}
+{ok,2}
 6> throttle:check('context', 'id'), throttle:check('context', 'id'),
 6> throttle:check('context', 'id'), throttle:check('context', 'id').
 {ok,4}
@@ -53,7 +53,7 @@ ok
 ## Set-Up
 To start the aplication you need to call at the start to `application:start(throttle)`.
 Then you can create all the context that you want calling to `throttle:start_context{'context_name', {numer_of_attemps, time_interval}}`.
-Rates can also be set via application environment instead of calling `start_context`, if you wish you could use both.
+Rates can also be set via application environment instead of calling `start_context` function, if you wish you could use both.
 ```Erlang
 {throttle, [
             {resources, [
@@ -69,4 +69,15 @@ Rates can also be set via application environment instead of calling `start_cont
 ## Functions
 List of all the functionas avilables on the library.
 ### start\_link() -> supervisor:startlink\_ret().
-Start the throttle supervisor
+This function start the throttle supervisor. Other way of starting the throttle application is using `application:start(throttle)`.
+You can only start one throttle supervisor in your REST application.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+```
+```Erlang
+1> throttle:start_link(throttle).
+{ok,<0.50.0>}
+```
