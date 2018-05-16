@@ -18,8 +18,7 @@ create_link_test_() ->
 	       ?debugFmt("Create Link", []),
 	       {ok, Pid} = throttle:start_link(),
 	       ?assertNotEqual('undefined', process_info(Pid)),
-	       unlink(Pid),
-	       exit(Pid, kill)
+	       throttle:stop()
 	   end).
 
 create_contest_test_() ->
@@ -215,10 +214,26 @@ restart_test_() ->
 	       throttle:stop()
 	   end).
 
+env_test_() ->
+    ?_test(begin
+	       application:set_env(throttle, resources, [
+							 {'callbacks', {4, 5000}},
+							 {'trades', {5, 1000}},
+							 {'actions', {1000, 10000}},
+							 {'authorization', {4, 5000}}
+							]),
+	       application:start(throttle),
+	       ?assertMatch({error,{already_started,_}}, throttle:start_context('callbacks', {4, 5000})),
+	       ?assertMatch({error,{already_started,_}}, throttle:start_context('trades', {5, 1000})),
+	       ?assertMatch({error,{already_started,_}}, throttle:start_context('actions', {1000, 10000})),
+	       ?assertMatch({error,{already_started,_}}, throttle:start_context('authorization', {4, 5000})),	       
+	       throttle:stop()
+	   end).
+
 application_test_() ->
     ?_test(begin
 	       ?debugFmt("Check and Peek Test", []),
-	       ok = application:start(throttle),
+	       application:start(throttle),
 	       Context1 = 'context1',
 	       Context2 = 'context2',
 	       Counter = 'counter1',
