@@ -5,7 +5,8 @@ Application to implement throttling/rate limit of contexts in Erlang.
 ## Introduction
 
 Throttle is a `rebar3` library, created to avoid throttling on your REST application programmed in Erlang
-The application allow us to limit different context at different rates, allowing us to control the users (id) petitions to the REST, defining the numerber of attempts in a time interval.
+The application allow us to limit different context at different rates, allowing us to control the users (id) 
+petitions to the REST, defining the numerber of attempts in a time interval.
 ```Erlang
 1> application:start(throttle).
 ok
@@ -41,13 +42,15 @@ ok
 {ok,<0.60.0>}
 3> throttle:check('context', 'id'), throttle:check('context1', 'id'),
 3> io:format("Context1: ~p, Context2: ~p~n",[throttle:peek('context', 'id'), throttle:peek('context1', 'id')]).
-"Context1: {ok,1}, Context2: {ok,1}"
+Context1: {ok,1}, Context2: {ok,1}
+ok
 4> throttle:check('context', 'id'), throttle:check('context', 'id'), throttle:check('context', 'id'),
 4> throttle:check('context', 'id'), throttle:check('context', 'id'), throttle:check('context', 'id'),
 4> throttle:check('context1', 'id'), throttle:check('context1', 'id'), throttle:check('context1', 'id'),
 4> throttle:check('context1', 'id'), throttle:check('context1', 'id'), throttle:check('context1', 'id'),
 4> io:format("Context1: ~p, Context2: ~p~n",[throttle:peek('context', 'id'), throttle:peek('context1', 'id')]).
-"Context1: {error,4,5000}, Context2: {ok,6}"
+Context1: {error,4,5000}, Context2: {ok,6}
+ok
 ```
 
 ## Set-Up
@@ -68,8 +71,10 @@ Rates can also be set via application environment instead of calling `start_cont
 
 ## Functions
 List of all the functionas avilables on the library.
+
 ### start\_link() -> supervisor:startlink\_ret().
-This function start the throttle supervisor. Other way of starting the throttle application is using `application:start(throttle)`.
+Start the throttle supervisor. Other way of starting the throttle 
+application is using `application:start(throttle)`.
 You can only start one throttle supervisor in your REST application.
 
 Examples:
@@ -78,6 +83,95 @@ Examples:
 ok
 ```
 ```Erlang
-1> throttle:start_link(throttle).
+1> throttle:start_link().
 {ok,<0.50.0>}
 ```
+
+### start\_context(atom(), {integer(), integer()}) -> supervisor:startchild\_ret().
+Create the context, the function receive the Id of the context, the first atom(), 
+and receive a tuple, being the first integer element the number of attemps and the second
+integer the time per attemps.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.79.0>}
+```
+
+### check(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
+Check the number of attems of a specific user, second atom(), in a specific resource, first atom().
+If the user has enough attemps return `{ok, integer()}`, being the integer the actual number of attemps in the interval.
+But if the user has not attemps return `{error, integer(), integer()}`, being the firts integer the number of attemps
+and the second onces the time of the interval.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.79.0>}
+3> throttle:check('context', 'id'),
+{ok,1}
+4> throttle:check('context', 'id'), throttle:check('context', 'id'),
+4> throttle:check('context', 'id'), throttle:check('context', 'id'),
+4> throttle:check('context', 'id').
+{error,4,5000}
+```
+
+### peek(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
+Check the number of attems of a specific user, second atom(), in a specific resource, first atom() but without 
+updating the internal counter. 
+If the user has enough attemps return `{ok, integer()}`, being the integer() the actual number of attemps in the interval.
+But if the user has not attemps return `{error, integer(), integer()}`, being the firts integer() the number of attemps
+and the second onces the time of the interval.
+
+Peek show the same result of doing a check call but without updating the internal counter.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.79.0>}
+3> io:format("Peek: ~p, Check: ~p~n", [throttle:peek('context', 'id'), throttle:check('context', 'id')]).
+Peek: {ok,1}, Check: {ok,1}
+ok
+```
+
+### restore(atom(), atom()) -> {ok, integer()}.
+Restore the number of attems of a specific user, second atom(), in a specific resource, first atom(). Return {ok, 0}.
+Restore of number of attems independently of the state.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.74.0>}
+3> io:format("Check: ~p, Restore: ~p, Check:~p~n", [throttle:check('context', 'id'), 
+3> throttle:restore('context', 'id'), throttle:check('context', 'id')]). 
+Check: {ok,1}, Restore: {ok,0}, Check:{ok,1}
+ok
+```
+
+### restart(atom()) -> ok.
+Restart the counter of all the user in a context, atom().
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.74.0>}
+3> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]),
+Check1: {ok,1}, Chec2k:{ok,1}
+ok
+4> throttle:restart('context'),
+ok
+5> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
+Check1: {ok,1}, Chec2k:{ok,1}
+ok
+```
+
