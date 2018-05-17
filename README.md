@@ -5,8 +5,8 @@ Application to implement throttling/rate limit of contexts in Erlang.
 ## Introduction
 
 Throttle is a `rebar3` library, created to avoid throttling on your REST application programmed in Erlang
-The application allow us to limit different context at different rates, allowing us to control the users (id) 
-petitions to the REST, defining the numerber of attempts in a time interval.
+The application allows us to limit different context at different rates, allowing us to control the users (id)
+petitions to the REST, defining the number of attempts in a time interval.
 ```Erlang
 1> application:start(throttle).
 ok
@@ -32,7 +32,7 @@ ok
 {error,4,5000}
 ```
 
-Each user could be at different contexts at the same time beeing the access controler different per context.
+Each user could be at different contexts at the same time being the access controller different per context.
 ```Erlang
 1> application:start(throttle).
 ok
@@ -54,7 +54,7 @@ ok
 ```
 
 ## Set-Up
-To start the aplication you need to call at the start to `application:start(throttle)`.
+To start the application you need to call at the start to `application:start(throttle)`.
 Then you can create all the context that you want calling to `throttle:start_context{'context_name', {numer_of_attemps, time_interval}}`.
 Rates can also be set via application environment instead of calling `start_context` function, if you wish you could use both.
 ```Erlang
@@ -70,7 +70,7 @@ Rates can also be set via application environment instead of calling `start_cont
 ```
 
 ## Functions
-List of all the functionas avilables on the library.
+List of all the functions available on the library.
 
 ### start\_link() -> supervisor:startlink\_ret().
 Start the throttle supervisor. Other way of starting the throttle 
@@ -89,8 +89,8 @@ ok
 
 ### start\_context(atom(), {integer(), integer()}) -> supervisor:startchild\_ret().
 Create the context, the function receive the Id of the context, the first atom(), 
-and receive a tuple, being the first integer element the number of attemps and the second
-integer the time per attemps.
+and receive a tuple, being the first integer element the number of attempts and the second
+integer the time per attempts.
 
 Examples:
 ```Erlang
@@ -101,10 +101,10 @@ ok
 ```
 
 ### check(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
-Check the number of attems of a specific user, second atom(), in a specific resource, first atom().
-If the user has enough attemps return `{ok, integer()}`, being the integer the actual number of attemps in the interval.
-But if the user has not attemps return `{error, integer(), integer()}`, being the firts integer the number of attemps
-and the second onces the time of the interval.
+Check the number of attempts of a specific user, second atom(), in a specific resource, first atom().
+If the user has enough attempts return `{ok, integer()}`, being the integer the actual number of attempts in the interval.
+But if the user has not attempts return `{error, integer(), integer()}`, being the first integer the number of attempts
+and the second once the time of the interval.
 
 Examples:
 ```Erlang
@@ -121,11 +121,11 @@ ok
 ```
 
 ### peek(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
-Check the number of attems of a specific user, second atom(), in a specific resource, first atom() but without 
+Check the number of attempts of a specific user, second atom(), in a specific resource, first atom() but without
 updating the internal counter. 
-If the user has enough attemps return `{ok, integer()}`, being the integer() the actual number of attemps in the interval.
-But if the user has not attemps return `{error, integer(), integer()}`, being the firts integer() the number of attemps
-and the second onces the time of the interval.
+If the user has enough attempts return `{ok, integer()}`, being the integer() the actual number of attempts in the interval.
+But if the user has not attempts return `{error, integer(), integer()}`, being the first integer() the number of attempts
+and the second once the time of the interval.
 
 Peek show the same result of doing a check call but without updating the internal counter.
 
@@ -141,8 +141,8 @@ ok
 ```
 
 ### restore(atom(), atom()) -> {ok, integer()}.
-Restore the number of attems of a specific user, second atom(), in a specific resource, first atom(). Return {ok, 0}.
-Restore of number of attems independently of the state.
+Restore the number of attempts of a specific user, second atom(), in a specific resource, first atom(). Return {ok, 0}.
+Restore of number of attempts independently of the state.
 
 Examples:
 ```Erlang
