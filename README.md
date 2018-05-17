@@ -165,13 +165,47 @@ Examples:
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.74.0>}
-3> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]),
+3> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
 Check1: {ok,1}, Chec2k:{ok,1}
 ok
-4> throttle:restart('context'),
+4> throttle:restart('context').
 ok
 5> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
 Check1: {ok,1}, Chec2k:{ok,1}
 ok
 ```
 
+### stop(atom() | pid()) -> ok | {error, atom() | pid()}.
+Stop the context and all his counters of the giving context.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.74.0>}
+3> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
+Check1: {ok,1}, Chec2k:{ok,1}
+ok
+4> throttle:stop('context').
+ok
+5> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
+** exception exit: {noproc,{gen_server,call,[context,{update_counter,id1}]}}
+    in function  gen_server:call/2 (gen_server.erl, line 204)
+```
+
+### spec stop() -> true.
+Stop the throttle applications.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> application:stop(throttle).
+ok
+```
+```Erlang
+1> throttle:start_link().
+{ok,<0.50.0>}
+2> throttle:stop().
+```
