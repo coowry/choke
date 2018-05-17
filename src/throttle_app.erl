@@ -21,4 +21,5 @@ start(_Type, _StartArgs) ->
 %% @spec stop(_State) -> ServerRet
 %% @doc application stop callback for throttle.
 stop(_State) ->
+    throttle:stop(),
     ok.

@@ -227,7 +227,7 @@ env_test_() ->
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('trades', {5, 1000})),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('actions', {1000, 10000})),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('authorization', {4, 5000})),	       
-	       throttle:stop()
+	       application:stop(throttle)
 	   end).
 
 application_test_() ->
@@ -248,5 +248,5 @@ application_test_() ->
 	       ?assertEqual({error, 3, 2000}, throttle_context:check(Context2, Counter)),
 	       throttle:stop(Context1),
 	       throttle:stop(Context2),
-	       throttle:stop()
+	       application:stop(throttle)
 	   end).
