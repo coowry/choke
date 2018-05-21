@@ -44,7 +44,7 @@ start_context(Id, {Limit, Timeout}) ->
 %% @doc Update the counter of the CounterId belonging to the context 
 %% ContextId, and return a pair {ok, count} if you are between the limit or 
 %% {error, limit, timeout} if you exceed the limit.
--spec check(atom(), atom()) -> {ok, integer()} | {error, integer()}.
+-spec check(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
 check(ContextId, CounterId) ->
     throttle_context:check(ContextId, CounterId).
 
@@ -52,7 +52,7 @@ check(ContextId, CounterId) ->
 %% @doc Get the counter of the CounterId belonging to the context 
 %% ContextId and return a pair {ok, count} if you are between the limit or 
 %% {error, timeout} if you exceed the limit.
--spec peek(atom(), atom()) -> {ok, integer()} | {error, integer()}.
+-spec peek(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
 peek(ContextId, CounterId) ->
     gen_server:call(ContextId, {get_counter, CounterId}).
 
