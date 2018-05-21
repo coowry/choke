@@ -36,20 +36,20 @@ start_link(Id, CounterInit) ->
 
 %% @doc Update the counter of the CounterId and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec check(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec check(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
 check(ContextId, CounterId) ->
     gen_server:call(ContextId, {update_counter, CounterId}).
 
 
 %% @doc Get the counter of the CounterId and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec peek(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec peek(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
 peek(ContextId, CounterId) ->
     gen_server:call(ContextId, {get_counter, CounterId}).
 
 
 %% @doc Restore the counter of the CounterId and return a pair {ok, count}.
--spec restore(atom(), atom()) -> {ok, integer()}.
+-spec restore(atom(), any()) -> {ok, integer()}.
 restore(ContextId, CounterId) ->
     gen_server:call(ContextId, {restore_counter, CounterId}).
 
