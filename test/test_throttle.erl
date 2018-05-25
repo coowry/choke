@@ -250,3 +250,18 @@ application_test_() ->
 	       throttle:stop(Context2),
 	       application:stop(throttle)
 	   end).
+
+exception_test_() ->
+    ?_test(begin
+	       ?debugFmt("Exception Test", []),
+	       application:start(throttle),
+	       Context = 'context',
+	       Counter = 'counter',
+	       ?assertThrow(invalid_context, throttle:check(Context, Counter)),
+	       ?assertThrow(invalid_context, throttle:peek(Context, Counter)),
+	       ?assertThrow(invalid_context, throttle:restore(Context, Counter)),
+	       ?assertThrow(invalid_context, throttle:restart(Context)),
+	       ?assertThrow(invalid_context, throttle:stop(Context)),
+	       application:stop(throttle)
+	   end).
+

@@ -44,48 +44,67 @@ start_context(Id, {Limit, Timeout}) ->
 %% @doc Update the counter of the CounterId belonging to the context 
 %% ContextId, and return a pair {ok, count} if you are between the limit or 
 %% {error, limit, timeout} if you exceed the limit.
+%% Throw 'invalid_context' if the context doesn't exist.
 -spec check(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
 check(ContextId, CounterId) ->
-    throttle_context:check(ContextId, CounterId).
-
+    try
+	throttle_context:check(ContextId, CounterId)
+    catch
+	exit:_ -> throw(invalid_context)
+    end.
 
 %% @doc Get the counter of the CounterId belonging to the context 
 %% ContextId and return a pair {ok, count} if you are between the limit or 
 %% {error, timeout} if you exceed the limit.
 -spec peek(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
 peek(ContextId, CounterId) ->
-    gen_server:call(ContextId, {get_counter, CounterId}).
+    try
+	throttle_context:peek(ContextId, CounterId)
+    catch
+	exit:_ -> throw(invalid_context)
+    end.
 
 
 %% @doc Restore the counter of the CounterId belonging to the context 
 %% ContextId and return a pair {ok, count}.
 -spec restore(atom(), any()) -> {ok, integer()}.
 restore(ContextId, CounterId) ->
-    gen_server:call(ContextId, {restore_counter, CounterId}).
+    try
+	throttle_context:restore(ContextId, CounterId)
+    catch
+	exit:_ -> throw(invalid_context)
+    end.
 
 
 %% @doc Restart the context gen_server process independently of the state.
 -spec restart(atom()) -> ok.
 restart(ContextId) ->
-    case whereis(ContextId) of
-	undefined -> undefined;
-	A -> 
-	    unlink(A),
-	    throttle_context:stop(ContextId)
+    try
+	case whereis(ContextId) of
+	    undefined -> throw(invalid_context);
+	    A -> 
+		unlink(A),
+		throttle_context:stop(ContextId)
+	end
+    catch
+	exit:_ -> throw(invalid_context)
     end.
 
 
 %% @doc Stop the context gen_server process independently of the state.
--spec stop(atom() | pid()) -> ok | {error, atom() | pid()}.
+-spec stop(atom() | pid()) -> ok.
 stop(ContextId) when is_atom(ContextId) ->
     supervisor:terminate_child(?MODULE, ContextId),
-    supervisor:delete_child(?MODULE, ContextId);
+    case supervisor:delete_child(?MODULE, ContextId) of
+	{error, _} -> throw(invalid_context);
+	_ -> ok
+    end;
 
 stop(ContextId) when is_pid(ContextId) ->
     case process_info(ContextId, registered_name) of
 	{registered_name, Name} ->
 	    stop(Name);
-	_ -> {error, ContextId}
+	_ -> throw(invalid_context)
     end.
 
 
