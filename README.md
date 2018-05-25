@@ -60,10 +60,10 @@ Rates can also be set via application environment instead of calling `start_cont
 ```Erlang
 {throttle, [
             {resources, [
-                        {'callbacks', {4, 5000}},
-                        {'trades', {5, 1000}},
-                        {'actions', {1000, 10000}},
-                        {'authorization', {4, 5000}}
+                        {'context1', {4, 5000}},
+                        {'context2', {5, 1000}},
+                        {'context3', {1000, 10000}},
+                        {'context4', {4, 5000}}
                         ]
             }]
 }
@@ -175,7 +175,7 @@ Check1: {ok,1}, Chec2k:{ok,1}
 ok
 ```
 
-### stop(atom() | pid()) -> ok | {error, atom() | pid()}.
+### stop(atom() | pid()) -> ok.
 Stop the context and all his counters of the giving context.
 
 Examples:
@@ -190,8 +190,7 @@ ok
 4> throttle:stop('context').
 ok
 5> io:format("Check1: ~p, Chec2k:~p~n", [throttle:check('context', 'id1'), throttle:check('context', 'id2')]).
-** exception exit: {noproc,{gen_server,call,[context,{update_counter,id1}]}}
-    in function  gen_server:call/2 (gen_server.erl, line 204)
+** exception throw: invalid_context
 ```
 
 ### spec stop() -> true.
@@ -209,3 +208,7 @@ ok
 {ok,<0.50.0>}
 2> throttle:stop().
 ```
+
+## Exceptions
+The functions `check/2`, `peek/2`, `restore/2`, `restart/1` and `stop/1`  throw `invalid_context` when the context 
+doesn't exist on the system.
