@@ -2,6 +2,8 @@
 
 Erlang application to implement throttling/rate limit in Erlang.
 
+**Note:** we are appraising the posibility of changing the name of the library.
+
 ## Introduction
 
 Throttle is a `rebar3` library, created to avoid throttling on your
