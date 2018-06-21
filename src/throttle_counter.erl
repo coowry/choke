@@ -95,8 +95,12 @@ handle_call(update_counter, _From, State) ->
       UpdateCount = Count + 1,
       NewState = State#state{count = UpdateCount},
       {reply, {ok, UpdateCount}, NewState, Die};
+     Limit == Count ->
+      UpdateCount = Count + 1,
+      NewState = State#state{count = UpdateCount},
+      {reply, {error, Limit, State#state.timeout}, NewState, Die};
      true -> 
-      {reply, {error, State#state.limit, State#state.timeout}, State, Die}
+      {reply, {notify, Limit, State#state.timeout}, State, Die}
   end;
 
 
@@ -107,8 +111,12 @@ handle_call(get_counter, _From, State) ->
   Limit = State#state.limit,
   Count = State#state.count,
   Die = State#state.die,
-  if Limit > Count -> {reply, {ok, Count + 1}, State, Die};
-     true -> {reply, {error, Limit, State#state.timeout}, State, Die}
+  if Limit > Count -> 
+      {reply, {ok, Count + 1}, State, Die};
+     Limit == Count ->
+      {reply, {error, Limit, State#state.timeout}, State, Die};
+     true -> 
+      {reply, {notify, Limit, State#state.timeout}, State, Die}
   end;
 
 %% @doc Restore the internal counter also at the end set the die timeout of
@@ -144,7 +152,12 @@ handle_info(restore_counter, State) ->
 %% the process if not receive any call.
 handle_info(sub_counter, State) ->
   Count = State#state.count,
-  {noreply, State#state{count = Count - 1}, State#state.die};
+  Limit = State#state.limit,
+  if Count == Limit + 1 ->
+      {noreply, State#state{count = Count - 2}, State#state.die};
+     true ->
+      {noreply, State#state{count = Count - 1}, State#state.die}
+  end;
 
 
 %% @doc Process the undefine call.
