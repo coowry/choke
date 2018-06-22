@@ -12,6 +12,9 @@
 
 ## Next Release
 
+
+## v0.1.2
+
 - [F] Small Fix.
 
 ## v0.1.1
