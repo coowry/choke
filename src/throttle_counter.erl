@@ -23,7 +23,8 @@
 		limit :: integer(), 
 		count :: integer(), 
 		timeout :: integer(),
-		die :: integer()}).
+		die :: integer(),
+                blocked :: boolean()}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
@@ -50,14 +51,14 @@ start_link(Id, Parent, Limit, Timeout, Die) ->
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec check(atom() | pid()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec check(atom() | pid()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(Id) ->
   gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit.
--spec peek(atom() | pid()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec peek(atom() | pid()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 peek(Id) ->
   gen_server:call(Id, get_counter).
 
@@ -80,7 +81,8 @@ stop(Id) ->
 %% @doc Constructor of the counter gen_server process.
 init({Id, Parent, Limit, Timeout, Die}) ->
   process_flag(trap_exit, true),
-  {ok, #state{id = Id, parent = Parent, limit = Limit, count = 0, timeout = Timeout, die = Die}, Die}.
+  {ok, #state{id = Id, parent = Parent, limit = Limit, count = 0, 
+              timeout = Timeout, die = Die, blocked = false}, Die}.
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
@@ -90,17 +92,21 @@ handle_call(update_counter, _From, State) ->
   Limit = State#state.limit,
   Count = State#state.count,
   Die = State#state.die,
+  Blocked = State#state.blocked,
   if Limit > Count ->
       erlang:send_after(State#state.timeout, self(), sub_counter),
       UpdateCount = Count + 1,
-      NewState = State#state{count = UpdateCount},
+      NewState = if Blocked -> 
+                     State#state{count = UpdateCount, blocked = false};
+                    true ->
+                     State#state{count = UpdateCount}
+                 end,
       {reply, {ok, UpdateCount}, NewState, Die};
-     Limit == Count ->
-      UpdateCount = Count + 1,
-      NewState = State#state{count = UpdateCount},
-      {reply, {error, Limit, State#state.timeout}, NewState, Die};
+     not Blocked ->
+      NewState = State#state{blocked = true},
+      {reply, {warning, Limit, State#state.timeout}, NewState, Die};
      true -> 
-      {reply, {notify, Limit, State#state.timeout}, State, Die}
+      {reply, {error, Limit, State#state.timeout}, State, Die}
   end;
 
 
@@ -111,13 +117,15 @@ handle_call(get_counter, _From, State) ->
   Limit = State#state.limit,
   Count = State#state.count,
   Die = State#state.die,
-  if Limit > Count -> 
+  Blocked = State#state.blocked,
+  if Limit > Count ->
       {reply, {ok, Count + 1}, State, Die};
-     Limit == Count ->
-      {reply, {error, Limit, State#state.timeout}, State, Die};
+     not Blocked ->
+      {reply, {warning, Limit, State#state.timeout}, State, Die};
      true -> 
-      {reply, {notify, Limit, State#state.timeout}, State, Die}
+      {reply, {error, Limit, State#state.timeout}, State, Die}
   end;
+
 
 %% @doc Restore the internal counter also at the end set the die timeout of
 %% the process if not receive any call.
@@ -132,7 +140,7 @@ handle_call(stop, _From, State) ->
 
 %% @doc Process the undefine call.
 handle_call(Command, _, State) ->
-  Reply = {error, "The " ++ atom_to_list(Command) ++ " is undefine"},
+  Reply = {error, "The " ++ atom_to_list(Command) ++ " is unddefine"},
   {reply, Reply, State, State#state.die}.
 
 
@@ -151,13 +159,8 @@ handle_info(restore_counter, State) ->
 %% @doc Restore the internal counter also at the end set the die timeout of
 %% the process if not receive any call.
 handle_info(sub_counter, State) ->
-  Count = State#state.count,
-  Limit = State#state.limit,
-  if Count == Limit + 1 ->
-      {noreply, State#state{count = Count - 2}, State#state.die};
-     true ->
-      {noreply, State#state{count = Count - 1}, State#state.die}
-  end;
+  Count = State#state.count,      
+  {noreply, State#state{count = Count - 1}, State#state.die};
 
 
 %% @doc Process the undefine call.

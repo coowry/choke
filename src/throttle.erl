@@ -45,7 +45,7 @@ start_context(Id, {Limit, Timeout}) ->
 %% ContextId, and return a pair {ok, count} if you are between the limit or 
 %% {error, limit, timeout} if you exceed the limit.
 %% Throw 'invalid_context' if the context doesn't exist.
--spec check(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec check(atom(), any()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(ContextId, CounterId) ->
   try
     throttle_context:check(ContextId, CounterId)
@@ -56,7 +56,7 @@ check(ContextId, CounterId) ->
 %% @doc Get the counter of the CounterId belonging to the context 
 %% ContextId and return a pair {ok, count} if you are between the limit or 
 %% {error, timeout} if you exceed the limit.
--spec peek(atom(), any()) -> {ok, integer()} | {error, integer(), integer()}.
+-spec peek(atom(), any()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 peek(ContextId, CounterId) ->
   try
     throttle_context:peek(ContextId, CounterId)
