@@ -38,7 +38,7 @@ ok
 7> throttle:check('context', 'id'), throttle:check('context', 'id'),
 7> throttle:check('context', 'id'), throttle:check('context', 'id'),
 7> throttle:check('context', 'id').
-{error,4,5000}
+{warning,4,5000}
 ```
 
 Each identifier could be at different contexts at the same time being the access controller different per context.
@@ -58,7 +58,7 @@ ok
 4> throttle:check('context1', 'id'), throttle:check('context1', 'id'), throttle:check('context1', 'id'),
 4> throttle:check('context1', 'id'), throttle:check('context1', 'id'), throttle:check('context1', 'id'),
 4> io:format("Context1: ~p, Context2: ~p~n",[throttle:peek('context', 'id'), throttle:peek('context1', 'id')]).
-Context1: {error,4,5000}, Context2: {ok,6}
+Context1: {warning,4,5000}, Context2: {ok,6}
 ok
 ```
 
@@ -109,11 +109,12 @@ ok
 {ok,<0.79.0>}
 ```
 
-### check(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
-Check the number of attempts of a specific identifier, second atom(), in a specific context, first atom().
-If the identifier has enough attempts return `{ok, integer()}`, being the integer the actual number of attempts in the interval.
-But if the identifier has not attempts return `{error, integer(), integer()}`, being the first integer the number of attempts
-and the second once the time of the interval.
+### check(atom(), atom()) -> {ok, integer()} | {error | warning, integer(), integer()}.
+Check the number of attempts of a specific user, second atom(), in a specific resource, first atom().
+If the user has enough attempts return `{ok, integer()}`, being the integer the actual number of attempts in the interval.
+But if the user has not attempts, the first time return `{warning, integer(), integer()}`, being the first integer 
+the number of attempts and the second once the time of the interval. While the user has not attempts and continue making 
+call, the method return  `{error, integer(), integer()}`, the meaning is the same as before.
 
 Examples:
 ```Erlang
@@ -125,17 +126,18 @@ ok
 {ok,1}
 4> throttle:check('context', 'id'), throttle:check('context', 'id'),
 4> throttle:check('context', 'id'), throttle:check('context', 'id'),
-4> throttle:check('context', 'id').
-{error,4,5000}
+4> io:format("Check1: ~p, Check2: ~p~n", [throttle:check('context', 'id'), 
+4> throttle:check('context', 'id')]).
+Check1: {warning,4,5000}, Check2+: {error,4,5000}
 ```
 
-### peek(atom(), atom()) -> {ok, integer()} | {error, integer(), integer()}.
-Check the number of attempts of a specific identifier, second atom(), in a specific context, first atom() but without
+### peek(atom(), atom()) -> {ok, integer()} | {error | warning, integer(), integer()}.
+Check the number of attempts of a specific user, second atom(), in a specific resource, first atom() but without
 updating the internal counter. 
-If the identifier has enough attempts return `{ok, integer()}`, being the integer() the actual number of attempts in the interval.
-But if the identifier has not attempts return `{error, integer(), integer()}`, being the first integer() the number of attempts
-and the second once the time of the interval.
-
+If the user has enough attempts return `{ok, integer()}`, being the integer() the actual number of attempts in the interval.
+But if the user has not attempts, the first time return `{warning, integer(), integer()}`, being the first integer 
+the number of attempts and the second once the time of the interval. While the user has not attempts and continue making 
+call, the method return `{error, integer(), integer()}`, the meaning is the same as before.
 Peek show the same result of doing a check call but without updating the internal counter.
 
 Examples:
