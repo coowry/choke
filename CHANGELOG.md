@@ -12,6 +12,11 @@
 
 ## Next Release
 
+
+## v0.1.2
+
+- [F] Small Fix.
+
 ## v0.1.1
 
 - [+] Add a new state on block response.

@@ -50,14 +50,14 @@ start_link(Id, Parent, Limit, Timeout, Die) ->
 
 
 %% @doc Update the internal counter and return a pair {ok, count} if you are
-%% between the limit or {error, timeout} if you exceed the limit.
+%% between the limit or {error | warning, counter, timeout} if you exceed the limit.
 -spec check(atom() | pid()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(Id) ->
   gen_server:call(Id, update_counter).
 
 
 %% @doc Get the internal counter and return a pair {ok, count} if you are
-%% between the limit or {error, timeout} if you exceed the limit.
+%% between the limit or {error | warning, counter, timeout} if you exceed the limit.
 -spec peek(atom() | pid()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 peek(Id) ->
   gen_server:call(Id, get_counter).
