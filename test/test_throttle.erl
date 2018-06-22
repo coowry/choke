@@ -216,7 +216,7 @@ restart_test_() ->
 
 env_test_() ->
     ?_test(begin
-	       application:set_env(throttle, resources, [
+	       application:set_env(throttle, contexts, [
 							 {'callbacks', {4, 5000}},
 							 {'trades', {5, 1000}},
 							 {'actions', {1000, 10000}},
