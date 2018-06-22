@@ -66,7 +66,7 @@ check_peek_test_() ->
 		{ok, Pid} = throttle_context:start_link('context1', {2, 1000}),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
 		?assertEqual({ok, 2},  throttle_context:check(Pid, Name)),
-		?assertEqual({error, 2, 1000}, throttle_context:check(Pid, Name)),
+		?assertEqual({warning, 2, 1000}, throttle_context:check(Pid, Name)),
 		?assertEqual({error, 2, 1000}, throttle_context:peek(Pid, Name)),
 		?assertEqual({error, 2, 1000}, throttle_context:check(Pid, Name)),
 		throttle_context:stop(Pid)
@@ -95,7 +95,7 @@ check_peek_test_() ->
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter2')),
 		?assertEqual({ok, 2},  throttle_context:check(Pid, 'counter1')),
 		?assertEqual({ok, 2},  throttle_context:check(Pid, 'counter2')),
-		?assertEqual({error, 2, 1000},  throttle_context:check(Pid, 'counter1')),
+		?assertEqual({warning, 2, 1000},  throttle_context:check(Pid, 'counter1')),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, 'counter3')),
 		throttle_context:stop(Pid)
 	    end)
@@ -137,7 +137,7 @@ restore_test_() ->
 	        ?assertEqual({ok, 0},  throttle_context:restore(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:peek(Pid, Name)),
 		?assertEqual({ok, 1},  throttle_context:check(Pid, Name)),
-		?assertEqual({error, 2, 1000},  throttle_context:peek(Pid, 'counter2')),
+		?assertEqual({warning, 2, 1000},  throttle_context:peek(Pid, 'counter2')),
 		throttle_context:stop(Pid)
 	    end)
     ].

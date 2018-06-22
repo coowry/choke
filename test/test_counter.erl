@@ -92,7 +92,7 @@ check_peek_test_() ->
 		?assertEqual({ok, 2},  throttle_counter:check(Pid)),
 		?assertEqual({ok, 3},  throttle_counter:check(Pid)),
 		?assertEqual({ok, 4},  throttle_counter:check(Pid)),
-		?assertEqual({error, 4, 1000}, throttle_counter:check(Pid)),
+		?assertEqual({warning, 4, 1000}, throttle_counter:check(Pid)),
 		?assertEqual({error, 4, 1000}, throttle_counter:peek(Pid)),
 		?assertEqual({error, 4, 1000}, throttle_counter:check(Pid)),
 		unlink(Pid),
