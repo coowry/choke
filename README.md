@@ -1,12 +1,21 @@
 # Throttle
 
-Application to implement throttling/rate limit of contexts in Erlang.
+Erlang application to implement throttling/rate limit in Erlang.
+
+**Note:** we are appraising the posibility of changing the name of the library.
 
 ## Introduction
 
-Throttle is a `rebar3` library, created to avoid throttling on your REST application programmed in Erlang
-The application allows us to limit different context at different rates, allowing us to control the users (id)
-petitions to the REST, defining the number of attempts in a time interval.
+Throttle is a `rebar3` library, created to avoid throttling on your
+API.
+
+The application allows us to limit different _contexts_ at different
+rates. For every context you can independently control different _identifiers_.
+
+A use case of the library is a RESTful API. Then, you can use your resource URIs as context and users as identifiers.
+
+## Samples
+
 ```Erlang
 1> application:start(throttle).
 ok
@@ -32,7 +41,7 @@ ok
 {warning,4,5000}
 ```
 
-Each user could be at different contexts at the same time being the access controller different per context.
+Each identifier could be at different contexts at the same time being the access controller different per context.
 ```Erlang
 1> application:start(throttle).
 ok
@@ -59,7 +68,7 @@ Then you can create all the context that you want calling to `throttle:start_con
 Rates can also be set via application environment instead of calling `start_context` function, if you wish you could use both.
 ```Erlang
 {throttle, [
-            {resources, [
+            {contexts, [
                         {'context1', {4, 5000}},
                         {'context2', {5, 1000}},
                         {'context3', {1000, 10000}},
@@ -143,7 +152,7 @@ ok
 ```
 
 ### restore(atom(), atom()) -> {ok, integer()}.
-Restore the number of attempts of a specific user, second atom(), in a specific resource, first atom(). Return {ok, 0}.
+Restore the number of attempts of a specific identifier, second atom(), in a specific context, first atom(). Return {ok, 0}.
 Restore of number of attempts independently of the state.
 
 Examples:
@@ -159,7 +168,7 @@ ok
 ```
 
 ### restart(atom()) -> ok.
-Restart the counter of all the user in a context, atom().
+Restart the counter of all the identifier in a context, atom().
 
 Examples:
 ```Erlang
