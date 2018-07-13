@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/2, check/2, peek/2, restore/2, stop/1, kick/3]).
+-export([start_link/2, check/2, check/3, peek/2, restore/2, stop/1, kick/3]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -38,7 +38,15 @@ start_link(Id, CounterInit) ->
 %% between the limit or {error | warning, counter, timeout} if you exceed the limit.
 -spec check(atom(), any()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(ContextId, CounterId) ->
-  gen_server:call(ContextId, {update_counter, CounterId}).
+  gen_server:call(ContextId, {update_counter, CounterId, [{strict, false}]}).
+
+
+%% @doc Update the counter of the CounterId and return a pair {ok, count} if you are
+%% between the limit or {error | warning, counter, timeout} if you exceed the limit.
+%% Also include a option parameter.
+-spec check(atom(), any(), [{atom(), boolean()}]) -> {ok, integer()} | {warning | error, integer(), integer()}.
+check(ContextId, CounterId, Options) ->
+  gen_server:call(ContextId, {update_counter, CounterId, Options}).
 
 
 %% @doc Get the counter of the CounterId and return a pair {ok, count} if you are
@@ -80,9 +88,9 @@ init({Id, {LimitCounter, TimeoutCounter}}) ->
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error, timeout} if you exceed the limit. Also at the
 %% end set the die timeout of the process if not receive any call.
-handle_call({update_counter, CounterId}, _From, State) ->
+handle_call({update_counter, CounterId, Options}, _From, State) ->
   {NewState, Pid} = get_child(State, CounterId),
-  Reply = throttle_counter:check(Pid),
+  Reply = throttle_counter:check(Pid, Options),
   {reply, Reply, NewState};
 
 

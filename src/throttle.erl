@@ -13,7 +13,7 @@
 -behaviour(supervisor).
 
 %% Exports
--export([start_link/0, start_context/2, check/2, 
+-export([start_link/0, start_context/2, check/2, check/3, 
 	 stop/1, stop/0, peek/2, restore/2, restart/1, 
 	 init/1]).
 
@@ -47,8 +47,17 @@ start_context(Id, {Limit, Timeout}) ->
 %% Throw 'invalid_context' if the context doesn't exist.
 -spec check(atom(), any()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(ContextId, CounterId) ->
+  check(ContextId, CounterId, [{strict, false}]).
+
+%% @doc Update the counter of the CounterId belonging to the context 
+%% ContextId, and return a pair {ok, count} if you are between the limit or 
+%% {error | warning, counter, timeout} if you exceed the limit.
+%% Also include a option parameter.
+%% Throw 'invalid_context' if the context doesn't exist.
+-spec check(atom(), any(), [{atom(), boolean()}]) -> {ok, integer()} | {warning | error, integer(), integer()}.
+check(ContextId, CounterId, Options) ->
   try
-    throttle_context:check(ContextId, CounterId)
+    throttle_context:check(ContextId, CounterId, Options)
   catch
     exit:_ -> throw(invalid_context)
   end.
