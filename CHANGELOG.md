@@ -12,6 +12,9 @@
 
 ## Next Release
 
+## v0.1.3
+
+-[+] More restritive throttle.
 
 ## v0.1.2
 
