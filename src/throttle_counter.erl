@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/5, start_link_name/5, check/1, peek/1, 
+-export([start_link/5, start_link_name/5, check/1, check/2, peek/1, 
 	 restore/1, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
@@ -53,6 +53,16 @@ start_link(Id, Parent, Limit, Timeout, Die) ->
 %% between the limit or {error | warning, counter, timeout} if you exceed the limit.
 -spec check(atom() | pid()) -> {ok, integer()} | {warning | error, integer(), integer()}.
 check(Id) ->
+  check(Id, [{strict, false}]).
+
+%% @doc Update the internal counter and return a pair {ok, count} if you are
+%% between the limit or {error | warning, counter, timeout} if you exceed the limit.
+%% Also include a option parameter.
+-spec check(atom() | pid(), [{atom(), boolean()}]) -> {ok, integer()} | {warning | error, integer(), integer()}.
+check(Id, [{strict, true}]) ->
+  gen_server:call(Id, update_counter_strict);
+
+check(Id, [{strict, false}]) ->
   gen_server:call(Id, update_counter).
 
 
@@ -107,6 +117,33 @@ handle_call(update_counter, _From, State) ->
       {reply, {warning, Limit, State#state.timeout}, NewState, Die};
      true -> 
       {reply, {error, Limit, State#state.timeout}, State, Die}
+  end;
+
+
+%% @doc Update the internal counter and return a pair {ok, count} if you are
+%% between the limit or {error, timeout} if you exceed the limit. Also at the
+%% end set the die timeout of the process if not receive any call.
+handle_call(update_counter_strict, _From, State) ->
+  Limit = State#state.limit,
+  Count = State#state.count,
+  Die = State#state.die,
+  Blocked = State#state.blocked,
+  %% Update the counter
+  erlang:send_after(State#state.timeout, self(), sub_counter),
+  UpdateCount = Count + 1,
+  if Limit > Count ->
+      NewState = if Blocked -> 
+                     State#state{count = UpdateCount, blocked = false};
+                    true ->
+                     State#state{count = UpdateCount}
+                 end,
+      {reply, {ok, UpdateCount}, NewState, Die};
+     not Blocked ->
+      NewState = State#state{blocked = true, count = UpdateCount},
+      {reply, {warning, Limit, State#state.timeout}, NewState, Die};
+     true -> 
+      NewState = State#state{count = UpdateCount},
+      {reply, {error, Limit, State#state.timeout}, NewState, Die}
   end;
 
 

@@ -131,7 +131,27 @@ ok
 Check1: {warning,4,5000}, Check2+: {error,4,5000}
 ```
 
-### peek(atom(), atom()) -> {ok, integer()} | {error | warning, integer(), integer()}.
+### check(atom(), atom(), [{atom(), boolean()}]) -> {ok, integer()} | {error | warning, integer(), integer()}.
+Check the number of attempts of a specific user, second atom(), in a specific resource, first atom().
+If the user has enough attempts return `{ok, integer()}`, being the integer the actual number of attempts in the interval.
+But if the user has not attempts, the first time return `{warning, integer(), integer()}`, being the first integer 
+the number of attempts and the second once the time of the interval. While the user has not attempts and continue making 
+call, the method return  `{error, integer(), integer()}`, the meaning is the same as before.
+The third is used to pass options to the check fucntion.
+#### Options ####
+- `[{strict, boolean()}]`: If strict is set to `true` the system count the fail attemps to. Is more restritive than the `false` option.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 5000}).
+{ok,<0.79.0>}
+3> throttle:check('context', 'id', [{strict, true}]),
+{ok,1}
+```
+
+### peek(atom(), atom(),) -> {ok, integer()} | {error | warning, integer(), integer()}.
 Check the number of attempts of a specific user, second atom(), in a specific resource, first atom() but without
 updating the internal counter. 
 If the user has enough attempts return `{ok, integer()}`, being the integer() the actual number of attempts in the interval.
