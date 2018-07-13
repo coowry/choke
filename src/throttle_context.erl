@@ -12,7 +12,8 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/2, check/2, check/3, peek/2, restore/2, stop/1, kick/3]).
+-export([start_link/2, check/2, check/3, peek/2, restore/2, 
+         stop/1, kick/3, get/2, get/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -73,6 +74,21 @@ stop(Id) ->
 kick(Pid, Id, CounterPid) ->
   gen_server:cast(Pid, {delete_counter, Id, CounterPid}).
 
+%% @doc
+-spec get(atom(), any()) -> #{id => atom(),
+                              count => integer(), 
+                              blocked => boolean()}.
+get(ContextId, CounterId) ->
+  gen_server:call(ContextId, {counter, CounterId}).
+
+
+%% @doc
+-spec get(atom()) -> [#{id => atom(),
+                        count => integer(), 
+                        blocked => boolean()}].
+get(Id) ->
+  gen_server:call(Id, get).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% gen_server functions
@@ -109,6 +125,24 @@ handle_call({restore_counter, CounterId}, _From, State) ->
   {NewState, Pid} = get_child(State, CounterId),
   Reply = throttle_counter:restore(Pid),
   {reply, Reply, NewState};
+
+
+%% @doc Restore the internal counter also at the end set the die timeout of
+%% the process if not receive any call.
+handle_call({counter, CounterId}, _From, State) ->
+  {NewState, Pid} = get_child(State, CounterId),
+  Reply = throttle_counter:get(Pid),
+  {reply, Reply, NewState};
+
+
+%% @doc Restore the internal counter also at the end set the die timeout of
+%% the process if not receive any call.
+handle_call(get, _From, State) ->
+  Childs = maps:values(State#state.child),
+  Reply = lists:map(fun(Pid) ->
+                         throttle_counter:get(Pid)
+                     end, Childs),
+  {reply, Reply, State};
 
 
 %% @doc Stop the counter gen_server process independently of the state.
