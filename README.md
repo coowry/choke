@@ -240,6 +240,60 @@ ok
 2> throttle:stop().
 ```
 
+### spec get(atom(), any()) -> #{id => atom(), count => integer(), blocked => boolean()}.
+Get information about a Counter inside of a Context.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 50000}).
+{ok,<0.120.0>}
+3> throttle:check('context', 'id').
+{ok,1}
+4> throttle:get('context', 'id').
+#{blocked => false,count => 1,id => id}
+```
+
+
+### spec get(atom()) -> [#{id => atom(), count => integer(), blocked => boolean()}].
+Get information about all the Counters inide of a context.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context', {4, 50000}).
+{ok,<0.120.0>}
+3> throttle:check('context', 'id1'). throttle:check('context', 'id2').
+{ok,1}
+4> throttle:get('context').
+[#{blocked => false,count => 1,id => id1}, #{blocked => false,count => 1,id => id2}]
+```
+
+### spec get() -> [{atom(), [#{id => atom(), count => integer(), blocked => boolean()}]}].
+Get all the Throttling informaticon about the counters and contexts.
+
+Examples:
+```Erlang
+1> application:start(throttle).
+ok
+2> throttle:start_context('context1', {4, 50000}).
+{ok,<0.120.0>}
+3> throttle:start_context('context2', {4, 50000}).
+{ok,<0.122.0>}
+4> throttle:check('context1', 'id1'). throttle:check('context1', 'id2').
+{ok,1}
+5> throttle:check('context2', 'id1'). throttle:check('context2', 'id2').
+{ok,1}
+6> throttle:get().
+[{context2,[#{blocked => false,count => 1,id => id1},
+            #{blocked => false,count => 1,id => id2}]},
+ {context1,[#{blocked => false,count => 1,id => id1},
+            #{blocked => false,count => 1,id => id2}]}]
+```
+
+
 ## Exceptions
 The functions `check/2`, `peek/2`, `restore/2`, `restart/1` and `stop/1`  throw `invalid_context` when the context 
 doesn't exist on the system.
