@@ -12,8 +12,8 @@
 -behaviour(gen_server).
 
 %% Exports
--export([start_link/5, start_link_name/5, check/1, check/2, peek/1, 
-	 restore/1, stop/1]).
+-export([start_link/5, start_link_name/5, check/1, check/2, 
+         peek/1, restore/1, stop/1, get/1]).
 -export([init/1, handle_call/3, handle_cast/2,
 	 handle_info/2, code_change/3, terminate/2]).
 
@@ -55,6 +55,7 @@ start_link(Id, Parent, Limit, Timeout, Die) ->
 check(Id) ->
   check(Id, [{strict, false}]).
 
+
 %% @doc Update the internal counter and return a pair {ok, count} if you are
 %% between the limit or {error | warning, counter, timeout} if you exceed the limit.
 %% Also include a option parameter.
@@ -84,6 +85,13 @@ restore(Id) ->
 stop(Id) -> 
   gen_server:call(Id, stop).
 
+
+%% @doc Get information about a Counter
+-spec get(atom() | pid()) -> #{id => atom(),
+                               count => integer(), 
+                               blocked => boolean()}.
+get(Id) ->
+  gen_server:call(Id, get).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% gen_server functions
@@ -168,6 +176,16 @@ handle_call(get_counter, _From, State) ->
 %% the process if not receive any call.
 handle_call(restore_counter, _From, State) ->
   {reply, {ok, 0}, State#state{count = 0}, State#state.die};
+
+
+
+%% @doc Restore the internal counter also at the end set the die timeout of
+%% the process if not receive any call.
+handle_call(get, _From, State) ->
+  Data = #{id => State#state.id,
+           count => State#state.count, 
+           blocked => State#state.blocked},
+  {reply, Data, State, State#state.die};
 
 
 %% @doc Stop the counter gen_server process independently of the state.

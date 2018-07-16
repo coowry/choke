@@ -12,6 +12,10 @@
 
 ## Next Release
 
+## v0.1.4
+
+-[+] Add get/[0-2] to the throttling
+
 ## v0.1.3
 
 -[+] More restritive throttle.
