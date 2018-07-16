@@ -86,7 +86,7 @@ stop(Id) ->
   gen_server:call(Id, stop).
 
 
-%% @doc 
+%% @doc Get information about a Counter
 -spec get(atom() | pid()) -> #{id => atom(),
                                count => integer(), 
                                blocked => boolean()}.

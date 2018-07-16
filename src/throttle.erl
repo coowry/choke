@@ -15,7 +15,7 @@
 %% Exports
 -export([start_link/0, start_context/2, check/2, check/3, 
 	 stop/1, stop/0, peek/2, restore/2, restart/1, 
-	 init/1]).
+	 get/0, get/1, get/2, init/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public functions
@@ -121,6 +121,45 @@ stop(ContextId) when is_pid(ContextId) ->
 -spec stop() -> true.
 stop() ->
   exit(whereis(?MODULE), shutdown).
+
+
+%% @doc Get information about a Counter inside of a Context.
+-spec get(atom(), any()) -> #{id => atom(),
+                              count => integer(), 
+                              blocked => boolean()}.
+get(ContextId, CounterId) ->
+  try
+    throttle_context:get(ContextId, CounterId)
+  catch
+    exit:_ -> throw(invalid_context)
+  end.
+
+
+%% @doc Get information about all the Counters inide of a context.
+-spec get(atom()) -> [#{id => atom(),
+                        count => integer(), 
+                        blocked => boolean()}].
+get(Context) ->
+  try
+    throttle_context:get(Context)
+  catch
+    exit:_ -> throw(invalid_context)
+  end.
+
+
+%% @doc Get all the Throttling informaticon about the counters and contexts.
+-spec get() -> [{atom(), [#{id => atom(),
+                            count => integer(), 
+                            blocked => boolean()}]}].
+get() ->
+  Childs = supervisor:which_children(?MODULE),
+  lists:map(fun ({Name, Pid, _, _}) ->
+                try
+                  {Name, throttle_context:get(Pid)}
+                catch
+                  _:_ -> {Name, []}
+                end
+            end, Childs).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

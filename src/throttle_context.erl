@@ -69,12 +69,12 @@ stop(Id) ->
   gen_server:call(Id, stop).
 
 
-%% @doc
+%% @doc Delete a counter.
 -spec kick(pid(), atom(), pid()) -> ok.
 kick(Pid, Id, CounterPid) ->
   gen_server:cast(Pid, {delete_counter, Id, CounterPid}).
 
-%% @doc
+%% @doc Get information about a Counter inside of a Context.
 -spec get(atom(), any()) -> #{id => atom(),
                               count => integer(), 
                               blocked => boolean()}.
@@ -82,7 +82,7 @@ get(ContextId, CounterId) ->
   gen_server:call(ContextId, {counter, CounterId}).
 
 
-%% @doc
+%% @doc Get information about all the Counters inide of a context.
 -spec get(atom()) -> [#{id => atom(),
                         count => integer(), 
                         blocked => boolean()}].
