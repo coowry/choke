@@ -12,6 +12,10 @@
 
 ## Next Release
 
+## v0.1.5
+
+-[F] Fix version problem
+
 ## v0.1.4
 
 -[+] Add get/[0-2] to the throttling
