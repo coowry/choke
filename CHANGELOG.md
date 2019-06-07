@@ -12,6 +12,8 @@
 
 ## Next Release
 
+- [C] Rename application from throttle to choke
+
 ## v0.1.5
 
 -[F] Fix version problem
