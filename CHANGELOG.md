@@ -10,7 +10,10 @@
 - `[T]` Technical change that doesn't affect the API (eg. refactoring)
 
 
-## Next Release
+## Next release
+
+
+## v1.0.0
 
 - [C] Rename application from throttle to choke
 
