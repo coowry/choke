@@ -216,24 +216,24 @@ restart_test_() ->
 
 env_test_() ->
     ?_test(begin
-	       application:set_env(throttle, contexts, [
+	       application:set_env(choke, contexts, [
 							 {'callbacks', {4, 5000}},
 							 {'trades', {5, 1000}},
 							 {'actions', {1000, 10000}},
 							 {'authorization', {4, 5000}}
 							]),
-	       application:start(throttle),
+	       application:start(choke),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('callbacks', {4, 5000})),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('trades', {5, 1000})),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('actions', {1000, 10000})),
 	       ?assertMatch({error,{already_started,_}}, throttle:start_context('authorization', {4, 5000})),	       
-	       application:stop(throttle)
+	       application:stop(choke)
 	   end).
 
 application_test_() ->
     ?_test(begin
 	       ?debugFmt("Check and Peek Test", []),
-	       application:start(throttle),
+	       application:start(choke),
 	       Context1 = 'context1',
 	       Context2 = 'context2',
 	       Counter = 'counter1',
@@ -248,13 +248,13 @@ application_test_() ->
 	       ?assertEqual({warning, 3, 2000}, throttle_context:check(Context2, Counter)),
 	       throttle:stop(Context1),
 	       throttle:stop(Context2),
-	       application:stop(throttle)
+	       application:stop(choke)
 	   end).
 
 exception_test_() ->
     ?_test(begin
 	       ?debugFmt("Exception Test", []),
-	       application:start(throttle),
+	       application:start(choke),
 	       Context = 'context',
 	       Counter = 'counter',
 	       ?assertThrow(invalid_context, throttle:check(Context, Counter)),
@@ -262,6 +262,6 @@ exception_test_() ->
 	       ?assertThrow(invalid_context, throttle:restore(Context, Counter)),
 	       ?assertThrow(invalid_context, throttle:restart(Context)),
 	       ?assertThrow(invalid_context, throttle:stop(Context)),
-	       application:stop(throttle)
+	       application:stop(choke)
 	   end).
 
