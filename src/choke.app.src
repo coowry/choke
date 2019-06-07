@@ -1,4 +1,4 @@
-{application, throttle,
+{application, choke,
  [
   {description, "Throttling library"},
   {vsn, "0.1.5"},
