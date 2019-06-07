@@ -17,7 +17,7 @@ A use case of the library is a RESTful API. Then, you can use your resource URIs
 ## Samples
 
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).  %% 4 attempts every 5 seconds
 {ok,<0.50.0>}
@@ -43,7 +43,7 @@ ok
 
 Each identifier could be at different contexts at the same time being the access controller different per context.
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).  %% 4 attempts every 5 seconds
 {ok,<0.50.0>}
@@ -63,11 +63,11 @@ ok
 ```
 
 ## Set-Up
-To start the application you need to call at the start to `application:start(throttle)`.
+To start the application you need to call at the start to `application:start(choke)`.
 Then you can create all the context that you want calling to `throttle:start_context{'context_name', {numer_of_attemps, time_interval}}`.
 Rates can also be set via application environment instead of calling `start_context` function, if you wish you could use both.
 ```Erlang
-{throttle, [
+{choke, [
             {contexts, [
                         {'context1', {4, 5000}},
                         {'context2', {5, 1000}},
@@ -83,12 +83,12 @@ List of all the functions available on the library.
 
 ### start\_link() -> supervisor:startlink\_ret().
 Start the throttle supervisor. Other way of starting the throttle 
-application is using `application:start(throttle)`.
+application is using `application:start(choke)`.
 You can only start one throttle supervisor in your REST application.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 ```
 ```Erlang
@@ -103,7 +103,7 @@ integer the time per attempts.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.79.0>}
@@ -118,7 +118,7 @@ call, the method return  `{error, integer(), integer()}`, the meaning is the sam
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.79.0>}
@@ -143,7 +143,7 @@ The third is used to pass options to the check fucntion.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.79.0>}
@@ -162,7 +162,7 @@ Peek show the same result of doing a check call but without updating the interna
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.79.0>}
@@ -177,7 +177,7 @@ Restore of number of attempts independently of the state.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.74.0>}
@@ -192,7 +192,7 @@ Restart the counter of all the identifier in a context, atom().
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.74.0>}
@@ -211,7 +211,7 @@ Stop the context and all his counters of the giving context.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 5000}).
 {ok,<0.74.0>}
@@ -229,9 +229,9 @@ Stop the throttle applications.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
-2> application:stop(throttle).
+2> application:stop(choke).
 ok
 ```
 ```Erlang
@@ -245,7 +245,7 @@ Get information about a Counter inside of a Context.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 50000}).
 {ok,<0.120.0>}
@@ -261,7 +261,7 @@ Get information about all the Counters inide of a context.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context', {4, 50000}).
 {ok,<0.120.0>}
@@ -276,7 +276,7 @@ Get all the Throttling informaticon about the counters and contexts.
 
 Examples:
 ```Erlang
-1> application:start(throttle).
+1> application:start(choke).
 ok
 2> throttle:start_context('context1', {4, 50000}).
 {ok,<0.120.0>}

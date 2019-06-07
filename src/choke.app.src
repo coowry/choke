@@ -1,12 +1,14 @@
-{application, throttle,
+{application, choke,
  [
   {description, "Throttling library"},
-  {vsn, "0.1.5"},
+  {vsn, "1.0.0"},
   {registered, []},
   {applications, [
                   kernel,
                   stdlib
                  ]},
   {mod, { throttle_app, []}},
-  {env, []}
+  {env, []},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/coowry/choke"}]}
  ]}.

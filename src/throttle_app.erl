@@ -8,7 +8,7 @@
 %% @doc application start callback for throttle.
 start(_Type, _StartArgs) ->
   {ok, Pid} = throttle:start_link(),
-  case application:get_env(throttle, contexts) of
+  case application:get_env(choke, contexts) of
     {ok, Contexts} ->
       lists:foreach(fun({Id, {Limit, Timeout}}) ->
                         throttle:start_context(Id, {Limit, Timeout})
