@@ -8,5 +8,7 @@
                   stdlib
                  ]},
   {mod, { throttle_app, []}},
-  {env, []}
+  {env, []},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/coowry/choke"}]}
  ]}.
